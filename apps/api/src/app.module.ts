@@ -5,6 +5,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
+import { AuthModule } from './auth/auth.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AppConfig } from './config/app.config';
 import { configurationFactories } from './config/configuration';
@@ -45,6 +46,7 @@ function resolveRequestId(request: IncomingMessage): string {
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    AuthModule,
     HealthModule,
   ],
   providers: [

@@ -40,4 +40,19 @@ export default tseslint.config(
       'no-warning-comments': ['error', { terms: ['todo', 'fixme'], location: 'anywhere' }],
     },
   },
+  {
+    files: ['**/*.spec.ts', 'test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      'sonarjs/no-hardcoded-passwords': 'off',
+    },
+  },
+  {
+    files: ['prisma/**/*.ts'],
+    rules: {
+      'sonarjs/no-hardcoded-passwords': 'off',
+    },
+  },
 );

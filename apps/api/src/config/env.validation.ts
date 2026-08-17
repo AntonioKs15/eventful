@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   Max,
   Min,
   MinLength,
@@ -15,6 +16,7 @@ import { NodeEnvironment } from './node-environment.enum';
 const MIN_PORT = 1;
 const MAX_PORT = 65535;
 const MIN_SECRET_LENGTH = 16;
+const JWT_DURATION_PATTERN = /^\d+[smhd]$/;
 
 class EnvironmentVariables {
   @IsEnum(NodeEnvironment)
@@ -37,7 +39,7 @@ class EnvironmentVariables {
   JWT_ACCESS_SECRET!: string;
 
   @IsString()
-  @MinLength(1)
+  @Matches(JWT_DURATION_PATTERN)
   JWT_ACCESS_EXPIRES_IN!: string;
 
   @IsInt()
