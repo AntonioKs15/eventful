@@ -1,5 +1,6 @@
 import * as argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
+import { buildSeatGrid } from '../src/events/builders/seat-grid.builder';
 
 const prisma = new PrismaClient();
 
@@ -102,15 +103,7 @@ async function seedSeatedEvent(organizerId: string, venueId: string) {
           rows: SEATED_EVENT_ROWS,
           columns: SEATED_EVENT_COLUMNS,
           seats: {
-            create: Array.from({ length: SEATED_EVENT_ROWS }).flatMap(
-              (_, rowIndex) =>
-                Array.from({ length: SEATED_EVENT_COLUMNS }).map(
-                  (_, columnIndex) => ({
-                    rowLabel: String.fromCharCode('A'.charCodeAt(0) + rowIndex),
-                    seatNumber: columnIndex + 1,
-                  }),
-                ),
-            ),
+            create: buildSeatGrid(SEATED_EVENT_ROWS, SEATED_EVENT_COLUMNS),
           },
         },
       },

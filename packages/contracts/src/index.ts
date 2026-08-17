@@ -1,5 +1,6 @@
 export * from "./enums/user-role.enum";
 export * from "./enums/event-layout-type.enum";
+export * from "./enums/event-sort-by.enum";
 export * from "./enums/event-status.enum";
 export * from "./enums/reservation-status.enum";
 export * from "./enums/ticket-status.enum";

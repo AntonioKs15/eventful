@@ -15,7 +15,7 @@ const strategies: Record<EventLayoutType, AllocationStrategy> = {
 };
 ```
 
-injected into `ReservationsService`, which calls `strategies[event.layoutType].reserve(...)` — adding a third layout type later would mean adding one map entry and one class, touching zero existing branches. The same lookup-map-over-conditional shape is reused for the gate's four-outcome result (`GateValidationResult`) and for mapping `ErrorCode` to HTTP status in the exception filter (ADR 0010) — this pattern is the project's standing answer to "avoid nested/chained ifs," applied everywhere the same shape of problem shows up, not only here.
+injected into `ReservationsService`, which calls `strategies[event.layoutType].reserve(...)` — adding a third layout type later would mean adding one map entry and one class, touching zero existing branches. The same lookup-map-over-conditional shape is reused for the gate's four-outcome result (`GateValidationResult`), for mapping `ErrorCode` to HTTP status in the exception filter (ADR 0010), and one step earlier than reservation: `buildEventAllocationData()` (`apps/api/src/events/builders/event-allocation-data.builder.ts`) picks the `SeatMap`-vs-`GeneralAdmissionPool` nested-create payload at event-creation time through the identical `Record<EventLayoutType, ...>` shape — this pattern is the project's standing answer to "avoid nested/chained ifs," applied everywhere the same shape of problem shows up, not only in reservation allocation.
 
 ## Alternatives considered
 

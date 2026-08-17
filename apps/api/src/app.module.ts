@@ -6,13 +6,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AppConfig } from './config/app.config';
 import { configurationFactories } from './config/configuration';
 import { NodeEnvironment } from './config/node-environment.enum';
 import { validateEnvironment } from './config/env.validation';
+import { EventsModule } from './events/events.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { VenuesModule } from './venues/venues.module';
 
 function resolveRequestId(request: IncomingMessage): string {
   const header = request.headers['x-request-id'];
@@ -47,6 +50,9 @@ function resolveRequestId(request: IncomingMessage): string {
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
+    CatalogModule,
+    VenuesModule,
+    EventsModule,
     HealthModule,
   ],
   providers: [
