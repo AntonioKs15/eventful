@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ORGANIZER
+  CUSTOMER
+  GATE
+}
+
+enum VenueSource {
+  MANUAL
+  TICKETMASTER
+}
+
+enum EventLayoutType {
+  SEATED
+  GENERAL_ADMISSION
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  EXPIRED
+  CANCELLED
+}
+
+enum TicketStatus {
+  ISSUED
+  USED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum PaymentMethod {
+  SIMULATED_CARD
+}
+
+enum CatalogProvider {
+  TICKETMASTER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organizedEvents Event[]        @relation("EventOrganizer")
+  reservations    Reservation[]
+  tickets         Ticket[]
+  refreshTokens   RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Venue {
+  id         String      @id @default(cuid())
+  name       String
+  city       String
+  address    String
+  source     VenueSource @default(MANUAL)
+  externalId String?
+  createdAt  DateTime    @default(now())
+
+  events Event[]
+
+  @@unique([source, externalId])
+  @@index([city])
+  @@map("venues")
+}
+
+model Event {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  startsAt        DateTime
+  venueId         String
+  organizerId     String
+  capacity        Int
+  priceCents      Int
+  layoutType      EventLayoutType
+  status          EventStatus     @default(DRAFT)
+  catalogSourceId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  venue     Venue @relation(fields: [venueId], references: [id])
+  organizer User  @relation("EventOrganizer", fields: [organizerId], references: [id])
+
+  seatMap              SeatMap?
+  generalAdmissionPool GeneralAdmissionPool?
+  reservations         Reservation[]
+  tickets              Ticket[]
+
+  @@index([status, startsAt])
+  @@index([status, priceCents])
+  @@index([venueId])
+  @@index([organizerId])
+  @@map("events")
+}
+
+model SeatMap {
+  id      String @id @default(cuid())
+  eventId String @unique
+  rows    Int
+  columns Int
+
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  seats Seat[]
+
+  @@map("seat_maps")
+}
+
+model Seat {
+  id         String @id @default(cuid())
+  seatMapId  String
+  rowLabel   String
+  seatNumber Int
+
+  seatMap          SeatMap           @relation(fields: [seatMapId], references: [id], onDelete: Cascade)
+  reservationSeats ReservationSeat[]
+  tickets          Ticket[]
+
+  @@unique([seatMapId, rowLabel, seatNumber])
+  @@map("seats")
+}
+
+model GeneralAdmissionPool {
+  id       String @id @default(cuid())
+  eventId  String @unique
+  capacity Int
+  sold     Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("general_admission_pools")
+}
+
+model Reservation {
+  id         String            @id @default(cuid())
+  eventId    String
+  customerId String
+  status     ReservationStatus @default(PENDING)
+  quantity   Int?
+  expiresAt  DateTime
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  event    Event             @relation(fields: [eventId], references: [id])
+  customer User              @relation(fields: [customerId], references: [id])
+  seats    ReservationSeat[]
+  tickets  Ticket[]
+  payment  Payment?
+
+  @@index([customerId, status])
+  @@index([eventId, status])
+  @@map("reservations")
+}
+
+model ReservationSeat {
+  id            String @id @default(cuid())
+  reservationId String
+  seatId        String
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seat        Seat        @relation(fields: [seatId], references: [id])
+
+  @@unique([seatId])
+  @@index([reservationId])
+  @@map("reservation_seats")
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  reservationId String
+  eventId       String
+  customerId    String
+  seatId        String?
+  status        TicketStatus @default(ISSUED)
+  qrPublicCode  String       @unique
+  usedAt        DateTime?
+  createdAt     DateTime     @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  event       Event       @relation(fields: [eventId], references: [id])
+  customer    User        @relation(fields: [customerId], references: [id])
+  seat        Seat?       @relation(fields: [seatId], references: [id])
+
+  @@unique([eventId, seatId])
+  @@index([customerId])
+  @@index([eventId, status])
+  @@map("tickets")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  reservationId String        @unique
+  amountCents   Int
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod @default(SIMULATED_CARD)
+  declineReason String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@map("payments")
+}
+
+model ExternalCatalogCache {
+  id        String          @id @default(cuid())
+  provider  CatalogProvider
+  queryKey  String
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime        @default(now())
+
+  @@unique([provider, queryKey])
+  @@index([expiresAt])
+  @@map("external_catalog_cache")
+}

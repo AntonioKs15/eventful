@@ -1,0 +1,28 @@
+import { HttpStatus } from '@nestjs/common';
+import { ErrorCode } from '@eventful/contracts';
+
+export const ERROR_HTTP_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
+  [ErrorCode.VALIDATION_FAILED]: HttpStatus.BAD_REQUEST,
+  [ErrorCode.INVALID_CREDENTIALS]: HttpStatus.UNAUTHORIZED,
+  [ErrorCode.UNAUTHORIZED]: HttpStatus.UNAUTHORIZED,
+  [ErrorCode.FORBIDDEN]: HttpStatus.FORBIDDEN,
+  [ErrorCode.REFRESH_TOKEN_INVALID]: HttpStatus.UNAUTHORIZED,
+  [ErrorCode.RESOURCE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.EVENT_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.VENUE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.SEAT_ALREADY_TAKEN]: HttpStatus.CONFLICT,
+  [ErrorCode.SEAT_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.INSUFFICIENT_CAPACITY]: HttpStatus.CONFLICT,
+  [ErrorCode.RESERVATION_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.RESERVATION_EXPIRED]: HttpStatus.CONFLICT,
+  [ErrorCode.RESERVATION_NOT_PENDING]: HttpStatus.CONFLICT,
+  [ErrorCode.RESERVATION_NOT_OWNED]: HttpStatus.FORBIDDEN,
+  [ErrorCode.PAYMENT_ALREADY_PROCESSED]: HttpStatus.CONFLICT,
+  [ErrorCode.PAYMENT_DECLINED]: HttpStatus.PAYMENT_REQUIRED,
+  [ErrorCode.TICKET_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.TICKET_ALREADY_USED]: HttpStatus.CONFLICT,
+  [ErrorCode.TICKET_WRONG_EVENT]: HttpStatus.CONFLICT,
+  [ErrorCode.TICKET_INVALID]: HttpStatus.NOT_FOUND,
+  [ErrorCode.CATALOG_PROVIDER_UNAVAILABLE]: HttpStatus.BAD_GATEWAY,
+  [ErrorCode.INTERNAL_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
+};

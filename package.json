@@ -1,0 +1,23 @@
+{
+  "name": "eventful",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "build:contracts": "pnpm --filter @eventful/contracts build",
+    "dev": "pnpm build:contracts && pnpm --parallel --filter ./apps/* dev",
+    "dev:api": "pnpm build:contracts && pnpm --filter @eventful/api dev",
+    "dev:web": "pnpm build:contracts && pnpm --filter @eventful/web dev",
+    "build": "pnpm build:contracts && pnpm --filter ./apps/* build",
+    "lint": "pnpm build:contracts && pnpm --recursive lint",
+    "test": "pnpm build:contracts && pnpm --recursive test",
+    "format": "prettier --write .",
+    "prisma:migrate": "pnpm --filter @eventful/api prisma:migrate",
+    "prisma:seed": "pnpm --filter @eventful/api prisma:seed"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
