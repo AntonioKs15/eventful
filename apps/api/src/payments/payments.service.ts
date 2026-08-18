@@ -3,11 +3,13 @@ import { Event, Payment, Reservation, Ticket } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import {
   EventLayoutType,
+  KnownNotificationType,
   PaymentOutcome,
   PaymentStatus,
   ReservationStatus,
 } from '@eventful/contracts';
 import { castPrismaEnum } from '../common/utils/prisma-enum.util';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReservationNotFoundException } from '../reservations/exceptions/reservation-not-found.exception';
 import { ReservationNotOwnedException } from '../reservations/exceptions/reservation-not-owned.exception';
@@ -38,6 +40,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly allocationStrategyFactory: AllocationStrategyFactory,
     private readonly ticketsService: TicketsService,
+    private readonly notificationsService: NotificationsService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(PaymentsService.name);
@@ -66,8 +69,9 @@ export class PaymentsService {
       throw new PaymentAlreadyProcessedException();
     }
 
+    let result: PaymentResult;
     try {
-      return await this.prisma.$transaction((tx) =>
+      result = await this.prisma.$transaction((tx) =>
         this.outcomeHandlers[outcome](tx, reservation),
       );
     } catch (error) {
@@ -75,6 +79,41 @@ export class PaymentsService {
       throw error;
     } finally {
       this.logger.debug('Payment attempt completed');
+    }
+
+    // Outside the payment transaction on purpose: a notification failure must
+    // never roll back a successful payment/ticket-issuance.
+    await this.notifyOutcome(reservation, outcome);
+
+    return result;
+  }
+
+  private async notifyOutcome(
+    reservation: ReservationWithEvent,
+    outcome: PaymentOutcome,
+  ): Promise<void> {
+    try {
+      if (outcome === PaymentOutcome.APPROVE) {
+        await this.notificationsService.create({
+          userId: reservation.customerId,
+          type: KnownNotificationType.TICKET_ISSUED,
+          title: 'Your ticket is ready',
+          message: `Your ticket for ${reservation.event.title} has been issued.`,
+          relatedEntityType: 'RESERVATION',
+          relatedEntityId: reservation.id,
+        });
+      } else {
+        await this.notificationsService.create({
+          userId: reservation.customerId,
+          type: KnownNotificationType.PAYMENT_DECLINED,
+          title: 'Payment declined',
+          message: `Your payment for ${reservation.event.title} was declined.`,
+          relatedEntityType: 'RESERVATION',
+          relatedEntityId: reservation.id,
+        });
+      }
+    } catch (error) {
+      this.logger.warn({ err: error }, 'Failed to send payment notification');
     }
   }
 

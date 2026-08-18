@@ -12,22 +12,22 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
         className="transition-transform hover:-translate-y-1"
         stub={
           <>
-            <span className="font-ticket text-xs uppercase tracking-wide text-ink-950/60">
+            <span className="font-ticket text-xs uppercase tracking-wide text-foreground/60">
               {ticket.seat ? `Seat ${ticket.seat.rowLabel}${ticket.seat.seatNumber}` : "General admission"}
             </span>
-            <span className="font-display text-xl font-bold text-ink-950">→</span>
+            <span className="font-display text-xl font-bold text-foreground">→</span>
           </>
         }
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-ticket text-xs uppercase tracking-[0.15em] text-ink-950/60">
+            <p className="font-ticket text-xs uppercase tracking-[0.15em] text-foreground/60">
               {formatEventDate(ticket.event.startsAt)}
             </p>
-            <h3 className="mt-1 font-display text-2xl font-bold uppercase leading-tight text-ink-950">
+            <h3 className="mt-1 font-display text-2xl font-bold uppercase leading-tight text-foreground">
               {ticket.event.title}
             </h3>
-            <p className="mt-1 text-sm text-ink-950/70">
+            <p className="mt-1 text-sm text-foreground/70">
               {ticket.event.venue.name} · {ticket.event.venue.city}
             </p>
           </div>

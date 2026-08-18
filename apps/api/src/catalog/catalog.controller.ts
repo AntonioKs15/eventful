@@ -5,6 +5,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CatalogService } from './catalog.service';
 import { CatalogSearchQueryDto } from './dto/catalog-search-query.dto';
 import { CatalogEventSummary } from './catalog.mapper';
+import { CatalogMovieSummary } from './tmdb.mapper';
 
 @ApiTags('catalog')
 @Controller('catalog')
@@ -21,5 +22,17 @@ export class CatalogController {
     @Query() query: CatalogSearchQueryDto,
   ): Promise<PaginatedResult<CatalogEventSummary>> {
     return this.catalogService.search(query);
+  }
+
+  @Roles(UserRole.ORGANIZER)
+  @Get('movies/search')
+  @ApiOperation({
+    summary:
+      'Searches the TMDb catalog for the organizer to build a movie from.',
+  })
+  searchMovies(
+    @Query() query: CatalogSearchQueryDto,
+  ): Promise<PaginatedResult<CatalogMovieSummary>> {
+    return this.catalogService.searchMovies(query);
   }
 }

@@ -17,6 +17,14 @@ export interface SeatMapDimensions {
   columns: number;
 }
 
+export interface EventMovieSummary {
+  id: string;
+  title: string;
+  posterImageUrl: string;
+  durationMinutes: number;
+  ratingLabel: string;
+}
+
 export interface EventSummary {
   id: string;
   title: string;
@@ -27,6 +35,7 @@ export interface EventSummary {
   layoutType: EventLayoutType;
   status: EventStatus;
   venue: Venue;
+  movie: EventMovieSummary | null;
   generalAdmissionPool: GeneralAdmissionPool | null;
   seatMap: SeatMapDimensions | null;
 }

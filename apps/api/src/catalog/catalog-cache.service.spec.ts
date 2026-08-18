@@ -29,7 +29,10 @@ describe('CatalogCacheService', () => {
         createMockLogger() as never,
       );
 
-      const result = await service.get('keyword=jazz');
+      const result = await service.get(
+        CatalogProvider.TICKETMASTER,
+        'keyword=jazz',
+      );
 
       expect(result).toBeNull();
     });
@@ -45,7 +48,10 @@ describe('CatalogCacheService', () => {
         createMockLogger() as never,
       );
 
-      const result = await service.get('keyword=jazz');
+      const result = await service.get(
+        CatalogProvider.TICKETMASTER,
+        'keyword=jazz',
+      );
 
       expect(result).toBeNull();
     });
@@ -62,7 +68,10 @@ describe('CatalogCacheService', () => {
         createMockLogger() as never,
       );
 
-      const result = await service.get('keyword=jazz');
+      const result = await service.get(
+        CatalogProvider.TICKETMASTER,
+        'keyword=jazz',
+      );
 
       expect(result).toEqual(payload);
     });
@@ -75,7 +84,7 @@ describe('CatalogCacheService', () => {
         createMockLogger() as never,
       );
 
-      await service.get('keyword=jazz&city=sp');
+      await service.get(CatalogProvider.TICKETMASTER, 'keyword=jazz&city=sp');
 
       expect(prisma.externalCatalogCache.findUnique).toHaveBeenCalledWith({
         where: {
@@ -97,7 +106,9 @@ describe('CatalogCacheService', () => {
         createMockLogger() as never,
       );
 
-      await service.store('keyword=jazz', { events: [] });
+      await service.store(CatalogProvider.TICKETMASTER, 'keyword=jazz', {
+        events: [],
+      });
 
       expect(prisma.externalCatalogCache.upsert).toHaveBeenCalledTimes(1);
       const call = prisma.externalCatalogCache.upsert.mock.calls[0][0];

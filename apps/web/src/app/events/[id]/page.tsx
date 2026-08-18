@@ -2,6 +2,8 @@
 
 import { EventLayoutType, UserRole } from "@eventful/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { QuantityPicker } from "@/components/quantity-picker";
@@ -39,7 +41,7 @@ export default function EventDetailPage() {
   });
 
   if (eventQuery.isPending) {
-    return <p className="mx-auto max-w-3xl px-6 py-16 text-ink-500">Loading event…</p>;
+    return <p className="mx-auto max-w-3xl px-6 py-16 text-surface-500">Loading event…</p>;
   }
 
   if (!eventQuery.data) {
@@ -60,26 +62,36 @@ export default function EventDetailPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-16">
-      <div>
-        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">
-          {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
-        </p>
-        <h1 className="font-display text-5xl font-bold uppercase leading-none text-paper">
-          {event.title}
-        </h1>
-        <p className="mt-2 text-ink-400">
-          {event.venue.name} · {event.venue.city}
-        </p>
+      <div className="flex gap-5">
+        {event.movie ? (
+          <Link
+            href={`/movies/${event.movie.id}`}
+            className="focus-ring relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-surface-800"
+          >
+            <Image src={event.movie.posterImageUrl} alt={event.movie.title} fill sizes="96px" className="object-cover" />
+          </Link>
+        ) : null}
+        <div>
+          <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">
+            {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
+          </p>
+          <h1 className="font-display text-4xl font-bold leading-tight text-foreground">
+            {event.movie?.title ?? event.title}
+          </h1>
+          <p className="mt-2 text-surface-400">
+            {event.venue.name} · {event.venue.city}
+          </p>
+        </div>
       </div>
 
-      <p className="max-w-2xl text-paper/90">{event.description}</p>
+      <p className="max-w-2xl text-foreground/90">{event.description}</p>
 
       <div className="ticket-stub rounded-2xl p-6">
         <div className="flex items-center justify-between">
-          <p className="font-ticket text-xs uppercase tracking-wide text-ink-950/60">
+          <p className="font-ticket text-xs uppercase tracking-wide text-foreground/60">
             {isSeated ? "Choose your seats" : "Choose a quantity"}
           </p>
-          <p className="font-display text-2xl font-bold text-ink-950">
+          <p className="font-display text-2xl font-bold text-foreground">
             {formatPriceCents(event.priceCents)}
           </p>
         </div>
@@ -127,7 +139,7 @@ function ReserveCallToAction({
 }) {
   if (!isAuthenticated) {
     return (
-      <a href="/login" className="font-ticket text-sm text-ink-950/70 underline">
+      <a href="/login" className="font-ticket text-sm text-foreground/70 underline">
         Log in as a customer to reserve
       </a>
     );
@@ -135,7 +147,7 @@ function ReserveCallToAction({
 
   if (!canReserve) {
     return (
-      <p className="font-ticket text-sm text-ink-950/60">
+      <p className="font-ticket text-sm text-foreground/60">
         Only customer accounts can reserve tickets.
       </p>
     );
@@ -158,7 +170,7 @@ function SeatMapPanel({
   onChange: (next: Set<string>) => void;
 }) {
   if (!seatMap) {
-    return <p className="text-sm text-ink-950/60">Loading seat map…</p>;
+    return <p className="text-sm text-foreground/60">Loading seat map…</p>;
   }
 
   return <SeatPicker seatMap={seatMap} selected={selected} onChange={onChange} />;

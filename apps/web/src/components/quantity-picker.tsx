@@ -15,7 +15,7 @@ export function QuantityPicker({
         type="button"
         onClick={() => onChange(clampQuantity(quantity - 1, remaining))}
         disabled={quantity <= 1}
-        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-ink-700 text-paper disabled:opacity-30"
+        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-surface-700 text-foreground disabled:opacity-30"
         aria-label="Decrease quantity"
       >
         −
@@ -25,12 +25,12 @@ export function QuantityPicker({
         type="button"
         onClick={() => onChange(clampQuantity(quantity + 1, remaining))}
         disabled={quantity >= remaining}
-        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-ink-700 text-paper disabled:opacity-30"
+        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-surface-700 text-foreground disabled:opacity-30"
         aria-label="Increase quantity"
       >
         +
       </button>
-      <span className="text-xs text-ink-500">{remaining} left</span>
+      <span className="text-xs text-surface-500">{remaining} left</span>
     </div>
   );
 }

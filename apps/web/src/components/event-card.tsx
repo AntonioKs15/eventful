@@ -16,23 +16,23 @@ export function EventCard({ event }: { event: EventSummary }) {
         className="transition-transform hover:-translate-y-1"
         stub={
           <>
-            <span className="font-ticket text-xs uppercase tracking-wide text-ink-950/60">
+            <span className="font-ticket text-xs uppercase tracking-wide text-foreground/60">
               {LAYOUT_LABEL[event.layoutType]}
             </span>
-            <span className="font-display text-xl font-bold text-ink-950">→</span>
+            <span className="font-display text-xl font-bold text-foreground">→</span>
           </>
         }
       >
-        <p className="font-ticket text-xs uppercase tracking-[0.15em] text-ink-950/60">
+        <p className="font-ticket text-xs uppercase tracking-[0.15em] text-foreground/60">
           {formatEventDate(event.startsAt)}
         </p>
-        <h3 className="mt-1 font-display text-2xl font-bold uppercase leading-tight text-ink-950">
+        <h3 className="mt-1 font-display text-2xl font-bold uppercase leading-tight text-foreground">
           {event.title}
         </h3>
-        <p className="mt-1 text-sm text-ink-950/70">
+        <p className="mt-1 text-sm text-foreground/70">
           {event.venue.name} · {event.venue.city}
         </p>
-        <p className="mt-3 font-ticket text-lg text-marquee-dim">{formatPriceCents(event.priceCents)}</p>
+        <p className="mt-3 font-ticket text-lg text-accent-dim">{formatPriceCents(event.priceCents)}</p>
       </TicketStub>
     </Link>
   );

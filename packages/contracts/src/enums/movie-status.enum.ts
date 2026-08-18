@@ -1,0 +1,5 @@
+export enum MovieStatus {
+  NOW_PLAYING = "NOW_PLAYING",
+  COMING_SOON = "COMING_SOON",
+  ARCHIVED = "ARCHIVED",
+}

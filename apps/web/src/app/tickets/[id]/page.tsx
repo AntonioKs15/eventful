@@ -21,7 +21,7 @@ function TicketDetail() {
   const qrQuery = useQuery({ queryKey: ["ticket-qr", id], queryFn: () => getTicketQr(id) });
 
   if (ticketQuery.isPending) {
-    return <p className="mx-auto max-w-md px-6 py-16 text-ink-500">Loading your ticket…</p>;
+    return <p className="mx-auto max-w-md px-6 py-16 text-surface-500">Loading your ticket…</p>;
   }
 
   if (!ticketQuery.data) {
@@ -56,13 +56,13 @@ function TicketDetail() {
       <div className="ticket-stub rounded-2xl p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-ticket text-xs uppercase tracking-[0.15em] text-ink-950/60">
+            <p className="font-ticket text-xs uppercase tracking-[0.15em] text-foreground/60">
               {formatEventDate(ticket.event.startsAt)} · {formatEventTime(ticket.event.startsAt)}
             </p>
-            <h1 className="mt-1 font-display text-3xl font-bold uppercase leading-tight text-ink-950">
+            <h1 className="mt-1 font-display text-3xl font-bold uppercase leading-tight text-foreground">
               {ticket.event.title}
             </h1>
-            <p className="mt-1 text-sm text-ink-950/70">
+            <p className="mt-1 text-sm text-foreground/70">
               {ticket.event.venue.name} · {ticket.event.venue.city}
             </p>
           </div>
@@ -80,11 +80,11 @@ function TicketDetail() {
               className="h-48 w-48"
             />
           ) : (
-            <div className="flex h-48 w-48 items-center justify-center text-xs text-ink-950/50">
+            <div className="flex h-48 w-48 items-center justify-center text-xs text-foreground/50">
               Loading QR…
             </div>
           )}
-          <p className="font-ticket text-xs text-ink-950/60">
+          <p className="font-ticket text-xs text-foreground/60">
             {ticket.seat ? `Seat ${ticket.seat.rowLabel}${ticket.seat.seatNumber}` : "General admission"}
           </p>
         </div>
@@ -93,7 +93,7 @@ function TicketDetail() {
       <button
         type="button"
         onClick={copyShareLink}
-        className="focus-ring rounded-full border border-ink-700 px-4 py-2.5 text-sm text-paper transition-colors hover:border-marquee hover:text-marquee"
+        className="focus-ring rounded-full border border-surface-700 px-4 py-2.5 text-sm text-foreground transition-colors hover:border-accent hover:text-accent"
       >
         {copied ? "Link copied!" : "Copy share link"}
       </button>
@@ -102,7 +102,7 @@ function TicketDetail() {
         type="button"
         onClick={copyGateCode}
         disabled={!qrQuery.data}
-        className="focus-ring rounded-full border border-ink-700 px-4 py-2.5 text-sm text-ink-500 transition-colors hover:border-marquee hover:text-marquee disabled:opacity-50"
+        className="focus-ring rounded-full border border-surface-700 px-4 py-2.5 text-sm text-surface-500 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
       >
         {codeCopied ? "Gate code copied!" : "Copy gate code (manual entry)"}
       </button>

@@ -7,6 +7,8 @@ export * from "./enums/ticket-status.enum";
 export * from "./enums/payment-status.enum";
 export * from "./enums/gate-validation-result.enum";
 export * from "./enums/payment-outcome.enum";
+export * from "./enums/movie-status.enum";
+export * from "./enums/notification-type.enum";
 export * from "./errors/error-code.enum";
 export * from "./errors/api-error.schema";
 export * from "./pagination/pagination.constants";

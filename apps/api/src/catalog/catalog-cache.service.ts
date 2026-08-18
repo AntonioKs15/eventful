@@ -13,14 +13,11 @@ export class CatalogCacheService {
     this.logger.setContext(CatalogCacheService.name);
   }
 
-  async get(queryKey: string): Promise<unknown> {
+  async get(provider: CatalogProvider, queryKey: string): Promise<unknown> {
     try {
       const record = await this.prisma.externalCatalogCache.findUnique({
         where: {
-          provider_queryKey: {
-            provider: CatalogProvider.TICKETMASTER,
-            queryKey,
-          },
+          provider_queryKey: { provider, queryKey },
         },
       });
 
@@ -40,21 +37,22 @@ export class CatalogCacheService {
     }
   }
 
-  async store(queryKey: string, payload: unknown): Promise<void> {
+  async store(
+    provider: CatalogProvider,
+    queryKey: string,
+    payload: unknown,
+  ): Promise<void> {
     const expiresAt = new Date(Date.now() + CATALOG_CACHE_TTL_MS);
     const jsonPayload = payload as Prisma.InputJsonValue;
 
     try {
       await this.prisma.externalCatalogCache.upsert({
         where: {
-          provider_queryKey: {
-            provider: CatalogProvider.TICKETMASTER,
-            queryKey,
-          },
+          provider_queryKey: { provider, queryKey },
         },
         update: { payload: jsonPayload, expiresAt },
         create: {
-          provider: CatalogProvider.TICKETMASTER,
+          provider,
           queryKey,
           payload: jsonPayload,
           expiresAt,

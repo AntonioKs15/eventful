@@ -34,6 +34,7 @@ services:
       REFRESH_TOKEN_EXPIRES_IN_DAYS: 30
       QR_HMAC_SECRET: local-docker-compose-qr-secret
       TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
     ports:
       - "3333:3333"
 

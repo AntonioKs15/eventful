@@ -5,6 +5,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
+import { ActorsModule } from './actors/actors.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -15,9 +16,12 @@ import { validateEnvironment } from './config/env.validation';
 import { EventsModule } from './events/events.module';
 import { GateModule } from './gate/gate.module';
 import { HealthModule } from './health/health.module';
+import { MoviesModule } from './movies/movies.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { VenuesModule } from './venues/venues.module';
 
@@ -62,6 +66,10 @@ function resolveRequestId(request: IncomingMessage): string {
     PaymentsModule,
     GateModule,
     HealthModule,
+    ActorsModule,
+    MoviesModule,
+    ReviewsModule,
+    NotificationsModule,
   ],
   providers: [
     {

@@ -53,6 +53,10 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   TICKETMASTER_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  TMDB_API_KEY?: string;
 }
 
 export function validateEnvironment(

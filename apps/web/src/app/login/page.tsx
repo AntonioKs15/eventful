@@ -39,8 +39,8 @@ export default function LoginPage() {
   return (
     <div className="mx-auto flex max-w-md flex-col gap-8 px-6 py-16">
       <div>
-        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">Admit one</p>
-        <h1 className="font-display text-4xl font-bold uppercase text-paper">Log in</h1>
+        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">Admit one</p>
+        <h1 className="font-display text-4xl font-bold uppercase text-foreground">Log in</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">

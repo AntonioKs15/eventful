@@ -31,6 +31,7 @@ const EVENT_ORDER_BY: Record<
 
 const EVENT_DETAIL_INCLUDE = {
   venue: true,
+  movie: true,
   generalAdmissionPool: true,
   seatMap: { select: { rows: true, columns: true } },
 } satisfies Prisma.EventInclude;
@@ -86,6 +87,7 @@ export class EventsService {
           catalogSourceId: dto.catalogSourceId,
           venue: { connect: { id: venue.id } },
           organizer: { connect: { id: organizerId } },
+          movie: dto.movieId ? { connect: { id: dto.movieId } } : undefined,
           ...allocationData,
         },
       });
@@ -121,6 +123,7 @@ export class EventsService {
       ...(query.city
         ? { venue: { city: { equals: query.city, mode: 'insensitive' } } }
         : {}),
+      ...(query.movieId ? { movieId: query.movieId } : {}),
     };
 
     try {

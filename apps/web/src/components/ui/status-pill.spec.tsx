@@ -2,10 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { StatusPill, StatusTone } from "./status-pill";
 
 const TONE_TO_CLASS: Record<StatusTone, string> = {
-  neutral: "bg-ink-700",
-  positive: "bg-admit/20",
-  warning: "bg-marquee/20",
-  negative: "bg-velvet/20",
+  neutral: "bg-surface-700",
+  positive: "bg-positive/20",
+  warning: "bg-accent/20",
+  negative: "bg-negative/20",
 };
 
 describe("StatusPill", () => {

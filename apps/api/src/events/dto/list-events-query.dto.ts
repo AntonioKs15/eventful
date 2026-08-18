@@ -9,6 +9,11 @@ export class ListEventsQueryDto {
   @IsString()
   city?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  movieId?: string;
+
   @ApiPropertyOptional({ enum: EventSortBy, default: EventSortBy.STARTS_AT })
   @IsOptional()
   @IsEnum(EventSortBy)

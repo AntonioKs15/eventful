@@ -1,43 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --color-ink-950: #14121c;
-  --color-ink-900: #1a1726;
-  --color-ink-800: #221e30;
-  --color-ink-700: #2d2740;
-  --color-ink-500: #948da3;
-  --color-ink-400: #b4aec0;
+  --color-surface-950: #0a0e27;
+  --color-surface-900: #0f1535;
+  --color-surface-800: #161c42;
+  --color-surface-700: #232a56;
+  --color-surface-500: #8a90b8;
+  --color-surface-400: #b1b6d6;
 
-  --color-paper: #f4ecd8;
-  --color-paper-dim: #e7dcc0;
-  --color-paper-line: #d9cba3;
+  --color-foreground: #eef1ff;
 
-  --color-marquee: #f0a202;
-  --color-marquee-dim: #c98600;
-  --color-velvet: #8b2e3d;
-  --color-velvet-dim: #6e2431;
-  --color-admit: #4c9a6a;
-  --color-admit-dim: #3a7a53;
+  --color-accent-start: #7c5cfc;
+  --color-accent-end: #4c8dff;
+  --color-accent: #8b6bfd;
+  --color-accent-dim: #6a4de0;
+
+  --color-positive: #34d399;
+  --color-positive-dim: #22b485;
+  --color-negative: #fb7185;
+  --color-negative-dim: #e4536b;
+
+  --color-ticket-card: #161c42;
+  --color-ticket-line: #2f3768;
 }
 
 @theme inline {
-  --color-ink-950: var(--color-ink-950);
-  --color-ink-900: var(--color-ink-900);
-  --color-ink-800: var(--color-ink-800);
-  --color-ink-700: var(--color-ink-700);
-  --color-ink-500: var(--color-ink-500);
-  --color-ink-400: var(--color-ink-400);
+  --color-surface-950: var(--color-surface-950);
+  --color-surface-900: var(--color-surface-900);
+  --color-surface-800: var(--color-surface-800);
+  --color-surface-700: var(--color-surface-700);
+  --color-surface-500: var(--color-surface-500);
+  --color-surface-400: var(--color-surface-400);
 
-  --color-paper: var(--color-paper);
-  --color-paper-dim: var(--color-paper-dim);
-  --color-paper-line: var(--color-paper-line);
+  --color-foreground: var(--color-foreground);
 
-  --color-marquee: var(--color-marquee);
-  --color-marquee-dim: var(--color-marquee-dim);
-  --color-velvet: var(--color-velvet);
-  --color-velvet-dim: var(--color-velvet-dim);
-  --color-admit: var(--color-admit);
-  --color-admit-dim: var(--color-admit-dim);
+  --color-accent-start: var(--color-accent-start);
+  --color-accent-end: var(--color-accent-end);
+  --color-accent: var(--color-accent);
+  --color-accent-dim: var(--color-accent-dim);
+
+  --color-positive: var(--color-positive);
+  --color-positive-dim: var(--color-positive-dim);
+  --color-negative: var(--color-negative);
+  --color-negative-dim: var(--color-negative-dim);
+
+  --color-ticket-card: var(--color-ticket-card);
+  --color-ticket-line: var(--color-ticket-line);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -57,15 +65,20 @@ body {
   font-family: var(--font-mono-ticket), monospace;
 }
 
+.gradient-cta {
+  background-image: linear-gradient(135deg, var(--color-accent-start), var(--color-accent-end));
+}
+
 .ticket-stub {
   position: relative;
-  background-color: var(--color-paper);
-  color: var(--color-ink-950);
+  background-color: var(--color-ticket-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-ticket-line);
 }
 
 .ticket-perforation {
   position: relative;
-  border-top: 2px dashed var(--color-paper-line);
+  border-top: 2px dashed var(--color-ticket-line);
 }
 
 .ticket-perforation::before,
@@ -76,7 +89,7 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 9999px;
-  background-color: var(--color-ink-950);
+  background-color: var(--color-surface-950);
 }
 
 .ticket-perforation::before {
@@ -92,7 +105,7 @@ body {
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-marquee);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 

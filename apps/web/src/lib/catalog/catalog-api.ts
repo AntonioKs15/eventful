@@ -23,3 +23,21 @@ export function searchCatalog(
     query: { keyword: keyword || undefined, city: city || undefined, page: 1, pageSize: 6 },
   });
 }
+
+export interface CatalogMovieSummary {
+  externalId: string;
+  title: string;
+  synopsis: string;
+  releaseDate: string | null;
+  posterImageUrl: string | null;
+  backdropImageUrl: string | null;
+  genres: string[];
+}
+
+export function searchMovieCatalog(
+  keyword: string,
+): Promise<PaginatedResult<CatalogMovieSummary>> {
+  return apiRequest("/catalog/movies/search", {
+    query: { keyword: keyword || undefined, page: 1, pageSize: 6 },
+  });
+}

@@ -10,9 +10,9 @@ const SEAT_STATE_LABEL: Record<SeatVisualState, string> = {
 };
 
 const SEAT_STATE_CLASSNAME: Record<SeatVisualState, string> = {
-  taken: "cursor-not-allowed bg-ink-800 text-ink-700",
-  selected: "bg-marquee text-ink-950",
-  available: "bg-ink-700 text-paper hover:bg-ink-500",
+  taken: "cursor-not-allowed bg-surface-800 text-surface-700",
+  selected: "bg-accent text-foreground",
+  available: "bg-surface-700 text-foreground hover:bg-surface-500",
 };
 
 function resolveSeatState(seat: SeatAvailability, isSelected: boolean): SeatVisualState {
@@ -56,7 +56,7 @@ export function SeatPicker({
     <div className="flex flex-col gap-2 overflow-x-auto pb-2">
       {Array.from(rows.entries()).map(([rowLabel, seats]) => (
         <div key={rowLabel} className="flex items-center gap-2">
-          <span className="font-ticket w-5 text-xs text-ink-500">{rowLabel}</span>
+          <span className="font-ticket w-5 text-xs text-surface-500">{rowLabel}</span>
           <div className="flex gap-2">
             {seats.map((seat) => {
               const isSelected = selected.has(seat.id);
@@ -79,15 +79,15 @@ export function SeatPicker({
         </div>
       ))}
 
-      <div className="mt-2 flex gap-4 text-xs text-ink-500">
+      <div className="mt-2 flex gap-4 text-xs text-surface-500">
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-ink-700" /> Available
+          <span className="h-3 w-3 rounded-sm bg-surface-700" /> Available
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-marquee" /> Selected
+          <span className="h-3 w-3 rounded-sm bg-accent" /> Selected
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-ink-800" /> Taken
+          <span className="h-3 w-3 rounded-sm bg-surface-800" /> Taken
         </span>
       </div>
     </div>

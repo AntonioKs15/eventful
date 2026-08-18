@@ -20,8 +20,8 @@ function MyTicketsList() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-16">
       <div>
-        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">Admit one</p>
-        <h1 className="font-display text-5xl font-bold uppercase leading-none text-paper">
+        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">Admit one</p>
+        <h1 className="font-display text-5xl font-bold uppercase leading-none text-foreground">
           My tickets
         </h1>
       </div>
@@ -29,7 +29,7 @@ function MyTicketsList() {
       <ApiErrorNotice error={error} />
 
       {isPending ? (
-        <p className="text-ink-500">Loading your tickets…</p>
+        <p className="text-surface-500">Loading your tickets…</p>
       ) : (
         <TicketsResults data={data} onPageChange={setPage} />
       )}

@@ -1,3 +1,4 @@
+import { CatalogProvider } from '@prisma/client';
 import { CatalogProviderUnavailableException } from './exceptions/catalog-provider-unavailable.exception';
 import { CatalogService } from './catalog.service';
 
@@ -26,12 +27,14 @@ const rawPayload = {
 function createService() {
   const cache = { get: jest.fn(), store: jest.fn() };
   const client = { search: jest.fn() };
+  const tmdbClient = { search: jest.fn() };
   const service = new CatalogService(
     cache as never,
     client as never,
+    tmdbClient as never,
     createMockLogger() as never,
   );
-  return { service, cache, client };
+  return { service, cache, client, tmdbClient };
 }
 
 describe('CatalogService', () => {
@@ -68,7 +71,11 @@ describe('CatalogService', () => {
       pageSize: 20,
       keyword: 'jazz',
     });
-    expect(cache.store).toHaveBeenCalledWith(expect.any(String), rawPayload);
+    expect(cache.store).toHaveBeenCalledWith(
+      CatalogProvider.TICKETMASTER,
+      expect.any(String),
+      rawPayload,
+    );
     expect(result.data[0].title).toBe('Sample Show');
   });
 

@@ -50,14 +50,14 @@ function GateScreen() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-8 px-6 py-16">
       <div>
-        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">Door</p>
-        <h1 className="font-display text-5xl font-bold uppercase leading-none text-paper">Gate check-in</h1>
+        <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">Door</p>
+        <h1 className="font-display text-5xl font-bold uppercase leading-none text-foreground">Gate check-in</h1>
       </div>
 
       <ApiErrorNotice error={eventsQuery.error} />
 
       <label className="flex flex-col gap-1.5 text-sm" htmlFor="gate-event">
-        <span className="font-medium text-ink-400">Checking in for</span>
+        <span className="font-medium text-surface-400">Checking in for</span>
         <select
           id="gate-event"
           value={eventId}
@@ -65,7 +65,7 @@ function GateScreen() {
             setEventId(changeEvent.target.value);
             setOutcome(null);
           }}
-          className="focus-ring rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-paper"
+          className="focus-ring rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2.5 text-foreground"
         >
           <option value="">Select an event…</option>
           {eventsQuery.data?.data.map((event) => (
@@ -83,14 +83,14 @@ function GateScreen() {
           {mode === "manual" ? (
             <form onSubmit={handleManualSubmit} className="flex flex-col gap-3">
               <label className="flex flex-col gap-1.5 text-sm" htmlFor="manual-code">
-                <span className="font-medium text-ink-400">Ticket code</span>
+                <span className="font-medium text-surface-400">Ticket code</span>
                 <textarea
                   id="manual-code"
                   rows={3}
                   value={manualCode}
                   onChange={(changeEvent) => setManualCode(changeEvent.target.value)}
                   placeholder="Paste or type the ticket's gate code"
-                  className="focus-ring rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 font-ticket text-sm text-paper"
+                  className="focus-ring rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2.5 font-ticket text-sm text-foreground"
                 />
               </label>
               <Button type="submit" disabled={validateMutation.isPending} className="self-start">
@@ -156,12 +156,12 @@ function CameraScanner({ active, onDecode }: { active: boolean; onDecode: (paylo
   }, [active, paused, onDecode]);
 
   if (cameraError) {
-    return <p className="text-sm text-velvet">{cameraError}</p>;
+    return <p className="text-sm text-negative">{cameraError}</p>;
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <video ref={videoRef} className="aspect-square w-full rounded-xl border border-ink-700 object-cover" muted />
+      <video ref={videoRef} className="aspect-square w-full rounded-xl border border-surface-700 object-cover" muted />
       {paused ? (
         <Button
           type="button"
@@ -180,23 +180,23 @@ function GateOutcomeCard({ outcome }: { outcome: GateValidationOutcome }) {
   const presentation = presentGateResult(outcome.result);
 
   return (
-    <div className="rounded-xl border border-ink-700 p-5">
+    <div className="rounded-xl border border-surface-700 p-5">
       <StatusPill tone={presentation.tone} label={presentation.label} />
-      <p className="mt-3 text-sm text-ink-300">{presentation.description}</p>
+      <p className="mt-3 text-sm text-surface-400">{presentation.description}</p>
       {outcome.ticket ? (
-        <dl className="mt-4 flex flex-col gap-1 font-ticket text-xs text-ink-500">
+        <dl className="mt-4 flex flex-col gap-1 font-ticket text-xs text-surface-500">
           <div className="flex justify-between">
             <dt>Ticket holder</dt>
-            <dd className="text-paper">{outcome.ticket.customerName}</dd>
+            <dd className="text-foreground">{outcome.ticket.customerName}</dd>
           </div>
           <div className="flex justify-between">
             <dt>Event</dt>
-            <dd className="text-paper">{outcome.ticket.eventTitle}</dd>
+            <dd className="text-foreground">{outcome.ticket.eventTitle}</dd>
           </div>
           {outcome.ticket.seatLabel ? (
             <div className="flex justify-between">
               <dt>Seat</dt>
-              <dd className="text-paper">{outcome.ticket.seatLabel}</dd>
+              <dd className="text-foreground">{outcome.ticket.seatLabel}</dd>
             </div>
           ) : null}
         </dl>

@@ -12,6 +12,8 @@ import { AuthGuard } from "@/lib/auth/auth-guard";
 import { CatalogEventSummary, searchCatalog } from "@/lib/catalog/catalog-api";
 import { CreateEventVenueInput, createEvent } from "@/lib/events/events-api";
 import { formatPriceCents } from "@/lib/format";
+import { listMovies } from "@/lib/movies/movies-api";
+import { MovieSummary } from "@/lib/movies/types";
 
 type VenueMode = "manual" | "catalog";
 
@@ -34,6 +36,7 @@ function CreateEventForm() {
   const [layoutType, setLayoutType] = useState<EventLayoutType>(EventLayoutType.GENERAL_ADMISSION);
   const [venueMode, setVenueMode] = useState<VenueMode>("manual");
   const [selectedCatalogEvent, setSelectedCatalogEvent] = useState<CatalogEventSummary | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<MovieSummary | null>(null);
 
   const {
     register,
@@ -98,11 +101,20 @@ function CreateEventForm() {
           ? { rows: Number(values.rows), columns: Number(values.columns) }
           : undefined,
       catalogSourceId: selectedCatalogEvent?.externalId,
+      movieId: selectedMovie?.id,
     });
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
+      <MoviePicker
+        selectedMovie={selectedMovie}
+        onSelect={(movie) => {
+          setSelectedMovie(movie);
+          setValue("title", movie.title);
+        }}
+      />
+
       <VenueModeTabs mode={venueMode} onChange={setVenueMode} />
 
       {venueMode === "catalog" ? (
@@ -110,15 +122,20 @@ function CreateEventForm() {
       ) : null}
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <TextField id="title" label="Title" {...register("title", { required: true })} />
+        <TextField
+          id="title"
+          label="Title"
+          readOnly={Boolean(selectedMovie)}
+          {...register("title", { required: true })}
+        />
         <div />
         <div className="sm:col-span-2">
           <label className="flex flex-col gap-1.5 text-sm" htmlFor="description">
-            <span className="font-medium text-ink-400">Description</span>
+            <span className="font-medium text-surface-400">Description</span>
             <textarea
               id="description"
               rows={3}
-              className="focus-ring rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-paper"
+              className="focus-ring rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2.5 text-foreground"
               {...register("description", { required: true })}
             />
           </label>
@@ -146,6 +163,57 @@ function CreateEventForm() {
         {createMutation.isPending ? "Creating…" : "Create event"}
       </Button>
     </form>
+  );
+}
+
+function MoviePicker({
+  selectedMovie,
+  onSelect,
+}: {
+  selectedMovie: MovieSummary | null;
+  onSelect: (movie: MovieSummary) => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  const { data, isPending, error } = useQuery({
+    queryKey: ["movies", "picker", search],
+    queryFn: () => listMovies({ search, page: 1, pageSize: 10 }),
+    enabled: search.length > 0,
+  });
+
+  return (
+    <div className="rounded-xl border border-surface-700 p-5">
+      <TextField
+        id="movie-search"
+        label="Movie"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search a movie by title…"
+      />
+
+      {selectedMovie ? (
+        <p className="mt-3 font-ticket text-xs text-accent">Selected: {selectedMovie.title}</p>
+      ) : null}
+
+      <ApiErrorNotice error={error} />
+
+      {isPending && search ? <p className="mt-3 text-sm text-surface-500">Searching…</p> : null}
+
+      {data ? (
+        <div className="mt-4 flex flex-col gap-2">
+          {data.data.map((movie) => (
+            <button
+              key={movie.id}
+              type="button"
+              onClick={() => onSelect(movie)}
+              className="focus-ring flex items-center justify-between rounded-lg border border-surface-700 px-4 py-3 text-left transition-colors hover:border-accent"
+            >
+              <span className="block font-medium text-foreground">{movie.title}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -180,7 +248,7 @@ function CatalogSearchPanel({
   });
 
   return (
-    <div className="rounded-xl border border-ink-700 p-5">
+    <div className="rounded-xl border border-surface-700 p-5">
       <div className="flex flex-wrap items-end gap-3">
         <TextField id="keyword" label="Keyword" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
         <TextField id="catalog-city" label="City" value={city} onChange={(e) => setCity(e.target.value)} />
@@ -190,12 +258,12 @@ function CatalogSearchPanel({
       </div>
 
       {selectedTitle ? (
-        <p className="mt-3 font-ticket text-xs text-marquee">Selected: {selectedTitle}</p>
+        <p className="mt-3 font-ticket text-xs text-accent">Selected: {selectedTitle}</p>
       ) : null}
 
       <ApiErrorNotice error={error} />
 
-      {isPending && committed ? <p className="mt-3 text-sm text-ink-500">Searching…</p> : null}
+      {isPending && committed ? <p className="mt-3 text-sm text-surface-500">Searching…</p> : null}
 
       {data ? (
         <div className="mt-4 flex flex-col gap-2">
@@ -204,16 +272,16 @@ function CatalogSearchPanel({
               key={catalogEvent.externalId}
               type="button"
               onClick={() => onSelect(catalogEvent)}
-              className="focus-ring flex items-center justify-between rounded-lg border border-ink-700 px-4 py-3 text-left transition-colors hover:border-marquee"
+              className="focus-ring flex items-center justify-between rounded-lg border border-surface-700 px-4 py-3 text-left transition-colors hover:border-accent"
             >
               <span>
-                <span className="block font-medium text-paper">{catalogEvent.title}</span>
-                <span className="block text-xs text-ink-500">
+                <span className="block font-medium text-foreground">{catalogEvent.title}</span>
+                <span className="block text-xs text-surface-500">
                   {catalogEvent.venueName ?? "Venue TBD"} · {catalogEvent.venueCity ?? "—"}
                 </span>
               </span>
               {catalogEvent.minPriceCents ? (
-                <span className="font-ticket text-sm text-marquee">
+                <span className="font-ticket text-sm text-accent">
                   {formatPriceCents(catalogEvent.minPriceCents)}
                 </span>
               ) : null}
@@ -237,7 +305,7 @@ function LayoutTypeFields({
   capacity: number;
 }) {
   return (
-    <div className="rounded-xl border border-ink-700 p-5">
+    <div className="rounded-xl border border-surface-700 p-5">
       <div className="flex gap-2">
         <Button
           type="button"
@@ -259,7 +327,7 @@ function LayoutTypeFields({
         <div className="mt-4 grid grid-cols-2 gap-5 sm:w-64">
           <TextField id="rows" label="Rows" type="number" min={1} {...register("rows", { required: true })} />
           <TextField id="columns" label="Seats per row" type="number" min={1} {...register("columns", { required: true })} />
-          <p className="col-span-2 font-ticket text-xs text-ink-500">Capacity: {capacity}</p>
+          <p className="col-span-2 font-ticket text-xs text-surface-500">Capacity: {capacity}</p>
         </div>
       ) : (
         <div className="mt-4 sm:w-48">
@@ -275,8 +343,8 @@ export default function CreateEventPage() {
     <AuthGuard allow={[UserRole.ORGANIZER]}>
       <div className="mx-auto flex max-w-2xl flex-col gap-8 px-6 py-16">
         <div>
-          <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">Box office</p>
-          <h1 className="font-display text-5xl font-bold uppercase leading-none text-paper">
+          <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">Box office</p>
+          <h1 className="font-display text-5xl font-bold uppercase leading-none text-foreground">
             Create event
           </h1>
         </div>

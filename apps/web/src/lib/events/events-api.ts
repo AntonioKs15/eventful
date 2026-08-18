@@ -27,6 +27,7 @@ export interface CreateEventInput {
   venue: CreateEventVenueInput;
   seatMap?: { rows: number; columns: number };
   catalogSourceId?: string;
+  movieId?: string;
 }
 
 export function listPublishedEvents(

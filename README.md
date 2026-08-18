@@ -1,9 +1,10 @@
 # Eventful — Events & Ticketing Platform
 
-An organizer publishes events (built manually or from the Ticketmaster Discovery catalog), a
-customer reserves a seat or general-admission spot, pays (simulated), and receives a QR ticket
-that can be shared by link. Gate staff validate tickets at the door, by camera or manual entry,
-with a hard guarantee that no seat sells twice and no ticket validates twice.
+An organizer builds a movie catalog (from TMDb or by hand) and schedules showtimes at a venue
+(from Ticketmaster Discovery or by hand); a customer browses what's playing, reserves a seat or
+general-admission spot, pays (simulated), and receives a QR ticket that can be shared by link.
+Gate staff validate tickets at the door, by camera or manual entry, with a hard guarantee that no
+seat sells twice and no ticket validates twice.
 
 Built for the Verzel Elite Dev challenge (`Desafio-Elite-Dev-2026.pdf`).
 
@@ -33,7 +34,7 @@ while can take up to ~30s to wake it back up.
 | Ticket sharing | Public opaque code, distinct from the gate code | [ADR 0008](docs/adr/0008-ticket-share-link.md) |
 | Logging | Structured JSON via `nestjs-pino`, `requestId` on every line and error response | [ADR 0009](docs/adr/0009-structured-logging.md) |
 | Errors | Single global filter, closed `ErrorCode` enum | [ADR 0010](docs/adr/0010-error-contract.md) |
-| External catalog | Backend-only proxy with cache, Ticketmaster Discovery | [ADR 0011](docs/adr/0011-external-catalog-integration.md) |
+| External catalog | Backend-only proxy with cache, Ticketmaster Discovery + TMDb | [ADR 0011](docs/adr/0011-external-catalog-integration.md) |
 | Seat/GA allocation | Strategy pattern via `Record<EventLayoutType, …>` lookup map | [ADR 0012](docs/adr/0012-allocation-strategy-pattern.md) |
 | Monorepo | pnpm workspaces | [ADR 0013](docs/adr/0013-package-manager-and-monorepo.md) |
 | Payment | Explicit simulated approve/decline, no hidden randomness | [ADR 0015](docs/adr/0015-payment-simulation.md) |
@@ -53,8 +54,11 @@ Full ADR index: [`docs/adr/`](docs/adr/).
     matches the schema exactly; either path runs the identical Prisma migrations, so there is no
     behavioral difference between them)
 - A [Ticketmaster Discovery API](https://developer.ticketmaster.com/) consumer key (free tier is
-  enough) if you want the organizer's "From Ticketmaster" catalog search to return real results —
+  enough) if you want the organizer's "From Ticketmaster" showtime search to return real results —
   the rest of the app works without it
+- A [TMDb API key](https://developer.themoviedb.org/docs/getting-started) (free, v3 `api_key`) if
+  you want the organizer's "From TMDb" movie search to return real results — same fallback: the
+  rest of the app, including manually created movies, works without it
 
 ## Local setup
 
@@ -65,7 +69,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 # edit apps/api/.env: set DATABASE_URL (Neon or local Docker Postgres),
 # generate real values for JWT_ACCESS_SECRET and QR_HMAC_SECRET, and
-# optionally set TICKETMASTER_API_KEY
+# optionally set TICKETMASTER_API_KEY and/or TMDB_API_KEY
 
 pnpm prisma:migrate   # applies all committed migrations
 pnpm prisma:seed      # seeds the four users below + two published events
@@ -88,9 +92,12 @@ All seeded users share the password `ChangeMe123!`.
 | `customer2@eventful.test` | Customer | Camila Customer |
 | `gate@eventful.test` | Gate | Gil Gatekeeper |
 
-The seed also publishes two events owned by Olivia: **The Life Comedy** (assigned seating, 5×8
-grid) and **Summer Sound Festival** (general admission, capacity 200) — enough to exercise both
-allocation strategies end to end without creating anything by hand.
+The seed also publishes: two movies (**Black Panther**, now playing, with cast; **The Marvels**,
+coming soon) owned by Olivia; a showtime for Black Panther at an assigned-seating venue (5×8 grid)
+plus a general-admission **Summer Sound Festival** event, covering both allocation strategies end
+to end; and, for Carlos, an already-issued ticket for that showtime plus a review for Black Panther
+— so the review-eligibility gate (only ticket holders can review) has something to show on first
+login instead of needing to be walked through by hand.
 
 ### API docs
 
@@ -128,7 +135,8 @@ alternatives considered, and the cross-origin cookie wiring in
 2. **API on Render**: in the Render dashboard, "New" → "Blueprint", point it at the repo — it
    reads `render.yaml` and creates the `eventful-api` web service. Fill in the secret env vars it
    leaves blank (`DATABASE_URL` from Neon, `JWT_ACCESS_SECRET` / `QR_HMAC_SECRET` as long random
-   strings, optionally `TICKETMASTER_API_KEY`); leave `CORS_ORIGIN` blank for now. Render builds
+   strings, optionally `TICKETMASTER_API_KEY` and/or `TMDB_API_KEY`); leave `CORS_ORIGIN` blank for
+   now. Render builds
    the Docker image and starts the service; `prisma migrate deploy` runs automatically as part of
    the container's start command, before the API begins listening.
 3. **Web on Vercel**: "Add New" → "Project", import the same repo, set **Root Directory** to
@@ -154,9 +162,9 @@ live API — see the Consequences section of ADR 0014.
   Redis — simpler given the single-datastore decision in ADR 0002, at the cost of expiry being
   precise only to the sweep interval rather than instantaneous. See
   [ADR 0006](docs/adr/0006-reservation-hold-expiry.md).
-- **The external catalog integration only implements Ticketmaster Discovery**, not a second
-  provider — the challenge asked for one external source, and Ticketmaster's response already
-  includes venue, date, and price data without needing a second call.
+- **TMDb genre names are resolved from a hardcoded id→name table**, not a live `/genre/movie/list`
+  call — TMDb's genre list is small, stable, and publicly documented, so this trades a rare future
+  drift for one fewer network call on every catalog search.
 - **Camera QR scanning depends on real camera hardware and a user permission grant**; it was
   built and code-reviewed against `@zxing/browser`'s documented API and exercised manually, but
   could not be exhaustively tested against physical scan conditions (lighting, printed vs. screen

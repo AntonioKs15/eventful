@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Big_Shoulders, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { QueryProvider } from "@/lib/query/query-provider";
 import "./globals.css";
 
-const displayFont = Big_Shoulders({
+const displayFont = Plus_Jakarta_Sans({
   variable: "--font-display",
-  weight: ["600", "700", "900"],
+  weight: ["600", "700", "800"],
   subsets: ["latin"],
 });
 
@@ -26,7 +26,7 @@ const monoFont = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Eventful",
   description:
-    "Reserve seats, hold your spot in the pit, and walk in with a ticket that cannot be faked.",
+    "Browse movies, pick your showtime, choose your seats, and walk in with a ticket that cannot be faked.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col bg-ink-950 text-paper antialiased">
+      <body className="min-h-full flex flex-col bg-surface-950 text-foreground antialiased">
         <QueryProvider>
           <AuthProvider>
             <SiteHeader />

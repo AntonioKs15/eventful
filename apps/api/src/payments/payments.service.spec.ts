@@ -49,15 +49,24 @@ function createService() {
     for: jest.fn().mockReturnValue(strategy),
   };
   const ticketsService = { issueForReservation: jest.fn() };
+  const notificationsService = { create: jest.fn() };
 
   const service = new PaymentsService(
     prisma as never,
     allocationStrategyFactory as never,
     ticketsService as never,
+    notificationsService as never,
     createMockLogger() as never,
   );
 
-  return { service, prisma, fakeTx, strategy, ticketsService };
+  return {
+    service,
+    prisma,
+    fakeTx,
+    strategy,
+    ticketsService,
+    notificationsService,
+  };
 }
 
 describe('PaymentsService.pay', () => {

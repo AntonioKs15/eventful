@@ -2,10 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Event, Reservation } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
-import { EventLayoutType, ReservationStatus } from '@eventful/contracts';
+import {
+  EventLayoutType,
+  KnownNotificationType,
+  ReservationStatus,
+} from '@eventful/contracts';
 import { castPrismaEnum } from '../common/utils/prisma-enum.util';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { RESERVATION_EXPIRY_SWEEP_INTERVAL_MS } from './reservations.constants';
+import {
+  RESERVATION_EXPIRY_SWEEP_INTERVAL_MS,
+  RESERVATION_EXPIRY_WARNING_WINDOW_MS,
+} from './reservations.constants';
 import { AllocationStrategyFactory } from './strategies/allocation-strategy.factory';
 
 type ExpiredReservation = Reservation & { event: Event };
@@ -15,6 +23,7 @@ export class ReservationExpiryScheduler {
   constructor(
     private readonly prisma: PrismaService,
     private readonly allocationStrategyFactory: AllocationStrategyFactory,
+    private readonly notificationsService: NotificationsService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(ReservationExpiryScheduler.name);
@@ -41,6 +50,60 @@ export class ReservationExpiryScheduler {
 
     for (const reservation of expired) {
       await this.releaseOne(reservation);
+    }
+  }
+
+  @Interval(RESERVATION_EXPIRY_SWEEP_INTERVAL_MS)
+  async warnExpiringSoonReservations(): Promise<void> {
+    let expiringSoon: ExpiredReservation[];
+
+    try {
+      expiringSoon = await this.prisma.reservation.findMany({
+        where: {
+          status: ReservationStatus.PENDING,
+          expiryWarningSentAt: null,
+          expiresAt: {
+            gte: new Date(),
+            lt: new Date(Date.now() + RESERVATION_EXPIRY_WARNING_WINDOW_MS),
+          },
+        },
+        include: { event: true },
+      });
+    } catch (error) {
+      this.logger.error(
+        { err: error },
+        'Failed to load soon-to-expire reservations',
+      );
+      return;
+    } finally {
+      this.logger.debug('Soon-to-expire reservation lookup completed');
+    }
+
+    for (const reservation of expiringSoon) {
+      await this.warnOne(reservation);
+    }
+  }
+
+  private async warnOne(reservation: ExpiredReservation): Promise<void> {
+    try {
+      await this.notificationsService.create({
+        userId: reservation.customerId,
+        type: KnownNotificationType.RESERVATION_EXPIRING_SOON,
+        title: 'Your reservation is expiring soon',
+        message: `Your hold for ${reservation.event.title} expires soon. Complete your payment to keep your seats.`,
+        relatedEntityType: 'RESERVATION',
+        relatedEntityId: reservation.id,
+      });
+
+      await this.prisma.reservation.update({
+        where: { id: reservation.id },
+        data: { expiryWarningSentAt: new Date() },
+      });
+    } catch (error) {
+      this.logger.warn(
+        { err: error, reservationId: reservation.id },
+        'Failed to send expiring-soon notification',
+      );
     }
   }
 

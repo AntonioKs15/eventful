@@ -1,10 +1,10 @@
 export type StatusTone = "neutral" | "positive" | "warning" | "negative";
 
 const TONE_CLASSES: Record<StatusTone, string> = {
-  neutral: "bg-ink-700 text-ink-400",
-  positive: "bg-admit/20 text-admit",
-  warning: "bg-marquee/20 text-marquee",
-  negative: "bg-velvet/20 text-velvet",
+  neutral: "bg-surface-700 text-surface-400",
+  positive: "bg-positive/20 text-positive",
+  warning: "bg-accent/20 text-accent",
+  negative: "bg-negative/20 text-negative",
 };
 
 export function StatusPill({ tone, label }: { tone: StatusTone; label: string }) {

@@ -3,6 +3,9 @@ import { apiRequest } from "../api/api-client";
 
 export interface PaymentTicket {
   id: string;
+  status: string;
+  qrPublicCode: string;
+  seatId: string | null;
 }
 
 export interface PaymentResult {

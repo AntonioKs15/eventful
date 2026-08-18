@@ -70,4 +70,9 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   catalogSourceId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  movieId?: string;
 }

@@ -2,6 +2,7 @@
 
 import { EventStatus, PAGINATION_DEFAULTS, UserRole } from "@eventful/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,11 @@ function OrganizerEventsList() {
     <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-16">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-ticket text-xs uppercase tracking-[0.2em] text-marquee">Box office</p>
-          <h1 className="font-display text-5xl font-bold uppercase leading-none text-paper">
-            My events
-          </h1>
+          <p className="font-ticket text-xs uppercase tracking-[0.2em] text-accent">Box office</p>
+          <h1 className="font-display text-4xl font-bold text-foreground">My showtimes</h1>
         </div>
         <Link href="/organizer/events/new">
-          <Button type="button">Create event</Button>
+          <Button type="button">Create showtime</Button>
         </Link>
       </div>
 
@@ -71,7 +70,7 @@ function OrganizerEventsResults({
   isPublishing: boolean;
 }) {
   if (isPending) {
-    return <p className="text-ink-500">Loading your events…</p>;
+    return <p className="text-surface-500">Loading your events…</p>;
   }
 
   if (!data || data.data.length === 0) {
@@ -110,15 +109,22 @@ function OrganizerEventRow({
   isPublishing: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-ink-700 px-5 py-4">
-      <div>
-        <p className="font-ticket text-xs uppercase tracking-wide text-ink-500">
-          {formatEventDate(event.startsAt)}
-        </p>
-        <p className="font-display text-xl font-bold uppercase text-paper">{event.title}</p>
-        <p className="text-sm text-ink-400">
-          {event.venue.name} · {formatPriceCents(event.priceCents)}
-        </p>
+    <div className="flex items-center justify-between rounded-xl border border-surface-700 px-5 py-4">
+      <div className="flex items-center gap-4">
+        {event.movie ? (
+          <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-800">
+            <Image src={event.movie.posterImageUrl} alt={event.movie.title} fill sizes="48px" className="object-cover" />
+          </div>
+        ) : null}
+        <div>
+          <p className="font-ticket text-xs uppercase tracking-wide text-surface-500">
+            {formatEventDate(event.startsAt)}
+          </p>
+          <p className="font-display text-xl font-bold text-foreground">{event.movie?.title ?? event.title}</p>
+          <p className="text-sm text-surface-400">
+            {event.venue.name} · {formatPriceCents(event.priceCents)}
+          </p>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <StatusPill tone={eventStatusTone(event.status)} label={eventStatusLabel(event.status)} />

@@ -54,6 +54,13 @@ enum PaymentMethod {
 
 enum CatalogProvider {
   TICKETMASTER
+  TMDB
+}
+
+enum MovieStatus {
+  NOW_PLAYING
+  COMING_SOON
+  ARCHIVED
 }
 
 model User {
@@ -69,6 +76,8 @@ model User {
   reservations    Reservation[]
   tickets         Ticket[]
   refreshTokens   RefreshToken[]
+  reviews         Review[]
+  notifications   Notification[]
 
   @@map("users")
 }
@@ -110,6 +119,7 @@ model Event {
   startsAt        DateTime
   venueId         String
   organizerId     String
+  movieId         String?
   capacity        Int
   priceCents      Int
   layoutType      EventLayoutType
@@ -118,8 +128,9 @@ model Event {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  venue     Venue @relation(fields: [venueId], references: [id])
-  organizer User  @relation("EventOrganizer", fields: [organizerId], references: [id])
+  venue     Venue  @relation(fields: [venueId], references: [id])
+  organizer User   @relation("EventOrganizer", fields: [organizerId], references: [id])
+  movie     Movie? @relation(fields: [movieId], references: [id])
 
   seatMap              SeatMap?
   generalAdmissionPool GeneralAdmissionPool?
@@ -130,6 +141,7 @@ model Event {
   @@index([status, priceCents])
   @@index([venueId])
   @@index([organizerId])
+  @@index([movieId])
   @@map("events")
 }
 
@@ -171,14 +183,15 @@ model GeneralAdmissionPool {
 }
 
 model Reservation {
-  id         String            @id @default(cuid())
-  eventId    String
-  customerId String
-  status     ReservationStatus @default(PENDING)
-  quantity   Int?
-  expiresAt  DateTime
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id                  String            @id @default(cuid())
+  eventId             String
+  customerId          String
+  status              ReservationStatus @default(PENDING)
+  quantity            Int?
+  expiresAt           DateTime
+  expiryWarningSentAt DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   event    Event             @relation(fields: [eventId], references: [id])
   customer User              @relation(fields: [customerId], references: [id])
@@ -252,4 +265,93 @@ model ExternalCatalogCache {
   @@unique([provider, queryKey])
   @@index([expiresAt])
   @@map("external_catalog_cache")
+}
+
+model Movie {
+  id               String      @id @default(cuid())
+  title            String
+  synopsis         String
+  durationMinutes  Int
+  genres           String[]
+  releaseDate      DateTime
+  posterImageUrl   String
+  backdropImageUrl String?
+  trailerUrl       String?
+  ratingLabel      String
+  catalogSourceId  String?
+  status           MovieStatus @default(COMING_SOON)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  cast      MovieActor[]
+  showtimes Event[]
+  reviews   Review[]
+
+  @@index([status])
+  @@index([releaseDate])
+  @@map("movies")
+}
+
+model Actor {
+  id        String    @id @default(cuid())
+  name      String
+  photoUrl  String?
+  bio       String?
+  birthDate DateTime?
+  createdAt DateTime  @default(now())
+
+  filmography MovieActor[]
+
+  @@map("actors")
+}
+
+model MovieActor {
+  id            String @id @default(cuid())
+  movieId       String
+  actorId       String
+  characterName String
+  billingOrder  Int    @default(0)
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  actor Actor @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@unique([movieId, actorId])
+  @@index([actorId])
+  @@map("movie_actors")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  movieId   String
+  userId    String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([movieId, userId])
+  @@index([movieId])
+  @@map("reviews")
+}
+
+model Notification {
+  id                String    @id @default(cuid())
+  userId            String
+  type              String
+  title             String
+  message           String
+  relatedEntityType String?
+  relatedEntityId   String?
+  metadata          Json?
+  readAt            DateTime?
+  createdAt         DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

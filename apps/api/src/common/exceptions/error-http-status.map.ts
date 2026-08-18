@@ -24,5 +24,11 @@ export const ERROR_HTTP_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
   [ErrorCode.TICKET_WRONG_EVENT]: HttpStatus.CONFLICT,
   [ErrorCode.TICKET_INVALID]: HttpStatus.NOT_FOUND,
   [ErrorCode.CATALOG_PROVIDER_UNAVAILABLE]: HttpStatus.BAD_GATEWAY,
+  [ErrorCode.MOVIE_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.ACTOR_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.REVIEW_NOT_ELIGIBLE]: HttpStatus.FORBIDDEN,
+  [ErrorCode.REVIEW_ALREADY_EXISTS]: HttpStatus.CONFLICT,
+  [ErrorCode.REVIEW_NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [ErrorCode.NOTIFICATION_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [ErrorCode.INTERNAL_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
 };

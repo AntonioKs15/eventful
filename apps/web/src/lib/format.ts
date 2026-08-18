@@ -28,3 +28,18 @@ export function formatEventDate(isoDate: string): string {
 export function formatEventTime(isoDate: string): string {
   return timeFormatter.format(new Date(isoDate));
 }
+
+const dayNumberFormatter = new Intl.DateTimeFormat("en-US", { day: "numeric" });
+const weekdayShortFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+
+export function formatDayNumber(isoDate: string): string {
+  return dayNumberFormatter.format(new Date(isoDate));
+}
+
+export function formatWeekdayShort(isoDate: string): string {
+  return weekdayShortFormatter.format(new Date(isoDate));
+}
+
+export function toDateKey(isoDate: string): string {
+  return new Date(isoDate).toDateString();
+}

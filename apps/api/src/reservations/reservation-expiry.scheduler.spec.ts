@@ -22,14 +22,16 @@ function createScheduler() {
   const allocationStrategyFactory = {
     for: jest.fn().mockReturnValue(strategy),
   };
+  const notificationsService = { create: jest.fn() };
 
   const scheduler = new ReservationExpiryScheduler(
     prisma as never,
     allocationStrategyFactory as never,
+    notificationsService as never,
     createMockLogger() as never,
   );
 
-  return { scheduler, prisma, strategy, fakeTx };
+  return { scheduler, prisma, strategy, fakeTx, notificationsService };
 }
 
 const expiredReservation = {
