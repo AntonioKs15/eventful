@@ -34,7 +34,7 @@ Full ADR index: [`docs/adr/`](docs/adr/).
 
 ## Prerequisites
 
-- Node.js ≥ 20
+- Node.js ≥ 22.13 (the pinned `pnpm@11.22.0` refuses to run on anything older)
 - pnpm ≥ 9 (repo pins `pnpm@11.22.0` via `packageManager`)
 - A PostgreSQL 16 database — either:
   - a free [Neon](https://neon.tech) project (used for both local development and production in
