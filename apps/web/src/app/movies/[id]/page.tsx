@@ -10,9 +10,10 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MovieCard } from "@/components/movie-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDayNumber, formatEventTime, formatWeekdayShort, toDateKey } from "@/lib/format";
-import { getMovie, getMovieReviews, getMovieShowtimes } from "@/lib/movies/movies-api";
+import { getMovie, getMovieReviews, getMovieShowtimes, listMovies } from "@/lib/movies/movies-api";
 import { createReview } from "@/lib/reviews/reviews-api";
 
 type TabKey = "overview" | "showtimes" | "reviews";
@@ -58,7 +59,7 @@ export default function MovieDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-surface-950 via-surface-950/60 to-transparent" />
       </div>
 
-      <div className="mx-auto -mt-24 flex w-full max-w-5xl flex-col gap-6 px-6 pb-16 sm:flex-row">
+      <div className="relative z-10 mx-auto -mt-24 flex w-full max-w-5xl flex-col gap-6 px-6 pb-16 sm:flex-row">
         <div className="relative -mt-4 h-64 w-44 shrink-0 overflow-hidden rounded-2xl shadow-xl shadow-black/40 sm:h-72 sm:w-48">
           <Image src={movie.posterImageUrl} alt={movie.title} fill sizes="192px" className="object-cover" />
         </div>
@@ -102,7 +103,9 @@ export default function MovieDetailPage() {
             ))}
           </div>
 
-          {tab === "overview" ? <OverviewTab synopsis={movie.synopsis} cast={movie.cast} /> : null}
+          {tab === "overview" ? (
+            <OverviewTab synopsis={movie.synopsis} cast={movie.cast} movieId={movie.id} genres={movie.genres} />
+          ) : null}
           {tab === "showtimes" ? <ShowtimeTab movieId={movie.id} /> : null}
           {tab === "reviews" ? <ReviewsTab movieId={movie.id} /> : null}
         </div>
@@ -114,9 +117,13 @@ export default function MovieDetailPage() {
 function OverviewTab({
   synopsis,
   cast,
+  movieId,
+  genres,
 }: {
   synopsis: string;
   cast: { id: string; characterName: string; actor: { id: string; name: string; photoUrl: string | null } }[];
+  movieId: string;
+  genres: string[];
 }) {
   return (
     <div className="flex flex-col gap-6 py-4">
@@ -144,6 +151,37 @@ function OverviewTab({
           </div>
         </div>
       ) : null}
+
+      <RelatedMovies movieId={movieId} genres={genres} />
+    </div>
+  );
+}
+
+const RELATED_MOVIES_POOL_SIZE = 20;
+const RELATED_MOVIES_LIMIT = 6;
+
+function RelatedMovies({ movieId, genres }: { movieId: string; genres: string[] }) {
+  const { data } = useQuery({
+    queryKey: ["movies", "related-pool"],
+    queryFn: () => listMovies({ page: 1, pageSize: RELATED_MOVIES_POOL_SIZE }),
+  });
+
+  const related = (data?.data ?? [])
+    .filter((candidate) => candidate.id !== movieId && candidate.genres.some((genre) => genres.includes(genre)))
+    .slice(0, RELATED_MOVIES_LIMIT);
+
+  if (related.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h2 className="text-sm font-medium uppercase tracking-wide text-surface-400">Related movies</h2>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {related.map((candidate) => (
+          <MovieCard key={candidate.id} movie={candidate} />
+        ))}
+      </div>
     </div>
   );
 }

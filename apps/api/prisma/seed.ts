@@ -172,11 +172,12 @@ async function seedMovies(cast: {
     genres: ['Action', 'Adventure'],
     releaseDate: new Date(Date.now() - 10 * MILLISECONDS_PER_DAY),
     posterImageUrl:
-      'https://images.unsplash.com/photo-1478720568477-152d9b164e26',
+      'https://image.tmdb.org/t/p/w500/uxzzxijgPIY7slzFvMotPv8wjKA.jpg',
     backdropImageUrl:
-      'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba',
+      'https://image.tmdb.org/t/p/w1280/b6ZJZHUdMEFECvGiDpJjlfUWela.jpg',
     ratingLabel: '14',
     status: 'NOW_PLAYING',
+    catalogSourceId: '284054',
   });
 
   const comingSoon = await upsertMovie({
@@ -259,6 +260,21 @@ const CURATED_TMDB_MOVIES: {
   { id: 872585, status: 'NOW_PLAYING' }, // Oppenheimer
   { id: 693134, status: 'COMING_SOON' }, // Dune: Part Two
   { id: 634649, status: 'COMING_SOON' }, // Spider-Man: No Way Home
+  { id: 278, status: 'NOW_PLAYING' }, // The Shawshank Redemption
+  { id: 238, status: 'NOW_PLAYING' }, // The Godfather
+  { id: 680, status: 'NOW_PLAYING' }, // Pulp Fiction
+  { id: 550, status: 'NOW_PLAYING' }, // Fight Club
+  { id: 13, status: 'NOW_PLAYING' }, // Forrest Gump
+  { id: 603, status: 'NOW_PLAYING' }, // The Matrix
+  { id: 157336, status: 'NOW_PLAYING' }, // Interstellar
+  { id: 496243, status: 'NOW_PLAYING' }, // Parasite
+  { id: 244786, status: 'NOW_PLAYING' }, // Whiplash
+  { id: 419430, status: 'NOW_PLAYING' }, // Get Out
+  { id: 313369, status: 'COMING_SOON' }, // La La Land
+  { id: 475557, status: 'COMING_SOON' }, // Joker
+  { id: 299534, status: 'COMING_SOON' }, // Avengers: Endgame
+  { id: 354912, status: 'COMING_SOON' }, // Coco
+  { id: 346698, status: 'COMING_SOON' }, // Barbie
 ];
 
 async function fetchTmdbMovieDetail(
@@ -278,20 +294,121 @@ async function fetchTmdbMovieDetail(
   }
 }
 
-async function seedMoviesFromTmdb() {
+interface TmdbCastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+const TMDB_SEED_CAST_LIMIT = 4;
+
+async function fetchTmdbCast(
+  id: number,
+  apiKey: string,
+): Promise<TmdbCastMember[]> {
+  try {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apiKey}`,
+    );
+    if (!response.ok) {
+      return [];
+    }
+    const payload = (await response.json()) as { cast?: TmdbCastMember[] };
+    return (payload.cast ?? []).slice(0, TMDB_SEED_CAST_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+async function upsertTmdbActor(name: string, photoUrl: string | null) {
+  const existing = await prisma.actor.findFirst({ where: { name } });
+  if (existing) {
+    return existing;
+  }
+  return prisma.actor.create({ data: { name, photoUrl } });
+}
+
+async function seedCastForMovie(movieId: string, cast: TmdbCastMember[]) {
+  for (const member of cast) {
+    const actor = await upsertTmdbActor(
+      member.name,
+      member.profile_path
+        ? `${TMDB_POSTER_BASE_URL}${member.profile_path}`
+        : null,
+    );
+
+    await prisma.movieActor.upsert({
+      where: { movieId_actorId: { movieId, actorId: actor.id } },
+      update: {},
+      create: {
+        movieId,
+        actorId: actor.id,
+        characterName: member.character || 'Unknown role',
+        billingOrder: member.order,
+      },
+    });
+  }
+}
+
+const TMDB_SHOWTIME_CAPACITY = 150;
+const TMDB_SHOWTIME_PRICE_CENTS = 4500;
+const TMDB_SHOWTIME_START_OFFSET_DAYS = 10;
+const TMDB_SHOWTIME_DAY_SPACING = 3;
+
+async function seedShowtimeForMovie(
+  organizerId: string,
+  venueId: string,
+  movie: { id: string; title: string },
+  index: number,
+) {
+  const catalogSourceId = `seed-tmdb-showtime-${movie.id}`;
+  const existing = await prisma.event.findFirst({ where: { catalogSourceId } });
+  if (existing) {
+    return existing;
+  }
+
+  const startsAt = new Date(
+    Date.now() +
+      (TMDB_SHOWTIME_START_OFFSET_DAYS + index * TMDB_SHOWTIME_DAY_SPACING) *
+        MILLISECONDS_PER_DAY,
+  );
+
+  return prisma.event.create({
+    data: {
+      title: movie.title,
+      description: `A general-admission showtime for ${movie.title}.`,
+      startsAt,
+      venueId,
+      organizerId,
+      movieId: movie.id,
+      capacity: TMDB_SHOWTIME_CAPACITY,
+      priceCents: TMDB_SHOWTIME_PRICE_CENTS,
+      layoutType: 'GENERAL_ADMISSION',
+      status: 'PUBLISHED',
+      catalogSourceId,
+      generalAdmissionPool: {
+        create: { capacity: TMDB_SHOWTIME_CAPACITY, sold: 0 },
+      },
+    },
+  });
+}
+
+async function seedMoviesFromTmdb(organizerId: string, venueId: string) {
   const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
     console.log('TMDB_API_KEY not set, skipping extra TMDb-sourced movies.');
     return;
   }
 
-  for (const { id, status } of CURATED_TMDB_MOVIES) {
+  for (const [index, { id, status }] of CURATED_TMDB_MOVIES.entries()) {
     const detail = await fetchTmdbMovieDetail(id, apiKey);
     if (!detail || !detail.poster_path) {
       continue;
     }
 
-    await upsertMovie({
+    const movie = await upsertMovie({
       title: detail.title,
       synopsis: detail.overview,
       durationMinutes: detail.runtime || TMDB_SEED_FALLBACK_DURATION_MINUTES,
@@ -305,6 +422,11 @@ async function seedMoviesFromTmdb() {
       status,
       catalogSourceId: String(detail.id),
     });
+
+    await seedShowtimeForMovie(organizerId, venueId, movie, index);
+
+    const cast = await fetchTmdbCast(id, apiKey);
+    await seedCastForMovie(movie.id, cast);
   }
 }
 
@@ -421,7 +543,7 @@ async function main() {
   await seedGeneralAdmissionEvent(organizer.id, venue.id);
   await seedTicketAndReview(customerOne.id, seatedEvent.id, nowPlaying.id);
   await seedNotifications(customerOne.id);
-  await seedMoviesFromTmdb();
+  await seedMoviesFromTmdb(organizer.id, venue.id);
 
   console.log(
     'Seed completed. Shared password for all seeded users:',
