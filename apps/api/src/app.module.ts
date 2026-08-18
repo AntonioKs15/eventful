@@ -15,6 +15,7 @@ import { validateEnvironment } from './config/env.validation';
 import { EventsModule } from './events/events.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReservationsModule } from './reservations/reservations.module';
 import { VenuesModule } from './venues/venues.module';
 
 function resolveRequestId(request: IncomingMessage): string {
@@ -53,6 +54,7 @@ function resolveRequestId(request: IncomingMessage): string {
     CatalogModule,
     VenuesModule,
     EventsModule,
+    ReservationsModule,
     HealthModule,
   ],
   providers: [
