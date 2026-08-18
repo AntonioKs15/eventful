@@ -18,7 +18,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequestUser } from '../auth/strategies/jwt-access.strategy';
 import { CreateEventDto } from './dto/create-event.dto';
 import { ListEventsQueryDto } from './dto/list-events-query.dto';
-import { EventsService } from './events.service';
+import { EventsService, SeatAvailabilityMap } from './events.service';
 
 @ApiTags('events')
 @Controller('events')
@@ -61,6 +61,17 @@ export class EventsController {
   @ApiOperation({ summary: 'Returns a single published event.' })
   findOne(@Param('id') id: string): Promise<Event> {
     return this.eventsService.findPublishedById(id);
+  }
+
+  @Public()
+  @Get(':id/seats')
+  @ApiOperation({
+    summary: 'Returns the seat grid and live availability for a SEATED event.',
+  })
+  getSeatAvailability(
+    @Param('id') id: string,
+  ): Promise<SeatAvailabilityMap | null> {
+    return this.eventsService.getSeatAvailability(id);
   }
 
   @Roles(UserRole.ORGANIZER)

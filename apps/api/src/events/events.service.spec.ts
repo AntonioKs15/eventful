@@ -30,6 +30,9 @@ function createService() {
       count: jest.fn(),
       update: jest.fn(),
     },
+    seatMap: {
+      findUnique: jest.fn(),
+    },
   };
   const venuesService = {
     findById: jest.fn(),
@@ -242,5 +245,44 @@ describe('EventsService.publish', () => {
       data: { status: EventStatus.PUBLISHED },
     });
     expect(result.status).toBe(EventStatus.PUBLISHED);
+  });
+});
+
+describe('EventsService.getSeatAvailability', () => {
+  it('returns null for a GENERAL_ADMISSION event with no seat map', async () => {
+    const { service, prisma } = createService();
+    prisma.seatMap.findUnique.mockResolvedValue(null);
+
+    const result = await service.getSeatAvailability('event-1');
+
+    expect(result).toBeNull();
+  });
+
+  it('marks a seat unavailable only when it has a live reservation hold', async () => {
+    const { service, prisma } = createService();
+    prisma.seatMap.findUnique.mockResolvedValue({
+      rows: 1,
+      columns: 2,
+      seats: [
+        { id: 'seat-1', rowLabel: 'A', seatNumber: 1, reservationSeats: [] },
+        {
+          id: 'seat-2',
+          rowLabel: 'A',
+          seatNumber: 2,
+          reservationSeats: [{ id: 'hold-1' }],
+        },
+      ],
+    });
+
+    const result = await service.getSeatAvailability('event-1');
+
+    expect(result).toEqual({
+      rows: 1,
+      columns: 2,
+      seats: [
+        { id: 'seat-1', rowLabel: 'A', seatNumber: 1, isAvailable: true },
+        { id: 'seat-2', rowLabel: 'A', seatNumber: 2, isAvailable: false },
+      ],
+    });
   });
 });

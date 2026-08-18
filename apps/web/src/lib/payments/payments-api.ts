@@ -1,0 +1,20 @@
+import { PaymentOutcome } from "@eventful/contracts";
+import { apiRequest } from "../api/api-client";
+
+export interface PaymentTicket {
+  id: string;
+}
+
+export interface PaymentResult {
+  payment: {
+    id: string;
+    status: string;
+    amountCents: number;
+    declineReason: string | null;
+  };
+  tickets: PaymentTicket[];
+}
+
+export function pay(reservationId: string, outcome: PaymentOutcome): Promise<PaymentResult> {
+  return apiRequest("/payments", { method: "POST", body: { reservationId, outcome } });
+}

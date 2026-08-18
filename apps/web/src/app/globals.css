@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-ink-950: #14121c;
+  --color-ink-900: #1a1726;
+  --color-ink-800: #221e30;
+  --color-ink-700: #2d2740;
+  --color-ink-500: #948da3;
+  --color-ink-400: #b4aec0;
+
+  --color-paper: #f4ecd8;
+  --color-paper-dim: #e7dcc0;
+  --color-paper-line: #d9cba3;
+
+  --color-marquee: #f0a202;
+  --color-marquee-dim: #c98600;
+  --color-velvet: #8b2e3d;
+  --color-velvet-dim: #6e2431;
+  --color-admit: #4c9a6a;
+  --color-admit-dim: #3a7a53;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-ink-950: var(--color-ink-950);
+  --color-ink-900: var(--color-ink-900);
+  --color-ink-800: var(--color-ink-800);
+  --color-ink-700: var(--color-ink-700);
+  --color-ink-500: var(--color-ink-500);
+  --color-ink-400: var(--color-ink-400);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-paper: var(--color-paper);
+  --color-paper-dim: var(--color-paper-dim);
+  --color-paper-line: var(--color-paper-line);
+
+  --color-marquee: var(--color-marquee);
+  --color-marquee-dim: var(--color-marquee-dim);
+  --color-velvet: var(--color-velvet);
+  --color-velvet-dim: var(--color-velvet-dim);
+  --color-admit: var(--color-admit);
+  --color-admit-dim: var(--color-admit-dim);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono-ticket: var(--font-mono-ticket);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.font-ticket {
+  font-family: var(--font-mono-ticket), monospace;
+}
+
+.ticket-stub {
+  position: relative;
+  background-color: var(--color-paper);
+  color: var(--color-ink-950);
+}
+
+.ticket-perforation {
+  position: relative;
+  border-top: 2px dashed var(--color-paper-line);
+}
+
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: "";
+  position: absolute;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background-color: var(--color-ink-950);
+}
+
+.ticket-perforation::before {
+  left: -11px;
+}
+
+.ticket-perforation::after {
+  right: -11px;
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-marquee);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

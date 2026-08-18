@@ -11,3 +11,4 @@ export * from "./errors/error-code.enum";
 export * from "./errors/api-error.schema";
 export * from "./pagination/pagination.constants";
 export * from "./pagination/pagination.schema";
+export * from "./schemas/login.schema";

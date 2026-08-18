@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Event, Reservation } from '@prisma/client';
+import { Event, Prisma, Reservation } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import { EventLayoutType, EventStatus } from '@eventful/contracts';
 import { castPrismaEnum } from '../common/utils/prisma-enum.util';
@@ -9,6 +9,10 @@ import { ReservationNotFoundException } from './exceptions/reservation-not-found
 import { ReservationNotOwnedException } from './exceptions/reservation-not-owned.exception';
 import { ReserveInput } from './strategies/allocation-strategy.interface';
 import { AllocationStrategyFactory } from './strategies/allocation-strategy.factory';
+
+export type ReservationWithEvent = Prisma.ReservationGetPayload<{
+  include: { event: { include: { venue: true } } };
+}>;
 
 @Injectable()
 export class ReservationsService {
@@ -45,12 +49,13 @@ export class ReservationsService {
   async findOwned(
     customerId: string,
     reservationId: string,
-  ): Promise<Reservation> {
-    let reservation: Reservation | null;
+  ): Promise<ReservationWithEvent> {
+    let reservation: ReservationWithEvent | null;
 
     try {
       reservation = await this.prisma.reservation.findUnique({
         where: { id: reservationId },
+        include: { event: { include: { venue: true } } },
       });
     } catch (error) {
       this.logger.error({ err: error }, 'Failed to look up reservation');

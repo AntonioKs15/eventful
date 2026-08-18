@@ -6,7 +6,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequestUser } from '../auth/strategies/jwt-access.strategy';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { ReservationsService } from './reservations.service';
+import {
+  ReservationsService,
+  ReservationWithEvent,
+} from './reservations.service';
 
 @ApiTags('reservations')
 @Controller('reservations')
@@ -40,7 +43,7 @@ export class ReservationsController {
   findOne(
     @CurrentUser() user: AuthenticatedRequestUser,
     @Param('id') id: string,
-  ): Promise<Reservation> {
+  ): Promise<ReservationWithEvent> {
     return this.reservationsService.findOwned(user.userId, id);
   }
 }

@@ -29,7 +29,34 @@ const EVENT_ORDER_BY: Record<
   [EventSortBy.PRICE_CENTS]: { priceCents: 'asc' },
 };
 
-type EventWithVenue = Prisma.EventGetPayload<{ include: { venue: true } }>;
+const EVENT_DETAIL_INCLUDE = {
+  venue: true,
+  generalAdmissionPool: true,
+  seatMap: { select: { rows: true, columns: true } },
+} satisfies Prisma.EventInclude;
+
+type EventWithDetails = Prisma.EventGetPayload<{
+  include: typeof EVENT_DETAIL_INCLUDE;
+}>;
+
+type SeatMapWithHolds = Prisma.SeatMapGetPayload<{
+  include: {
+    seats: { include: { reservationSeats: { select: { id: true } } } };
+  };
+}>;
+
+export interface SeatAvailabilityEntry {
+  id: string;
+  rowLabel: string;
+  seatNumber: number;
+  isAvailable: boolean;
+}
+
+export interface SeatAvailabilityMap {
+  rows: number;
+  columns: number;
+  seats: SeatAvailabilityEntry[];
+}
 
 @Injectable()
 export class EventsService {
@@ -88,7 +115,7 @@ export class EventsService {
 
   async listPublished(
     query: ListEventsQueryDto,
-  ): Promise<PaginatedResult<EventWithVenue>> {
+  ): Promise<PaginatedResult<EventWithDetails>> {
     const where: Prisma.EventWhereInput = {
       status: EventStatus.PUBLISHED,
       ...(query.city
@@ -100,7 +127,7 @@ export class EventsService {
       const [data, total] = await Promise.all([
         this.prisma.event.findMany({
           where,
-          include: { venue: true },
+          include: EVENT_DETAIL_INCLUDE,
           orderBy: EVENT_ORDER_BY[query.sortBy],
           skip: (query.page - 1) * query.pageSize,
           take: query.pageSize,
@@ -123,14 +150,14 @@ export class EventsService {
   async listMine(
     organizerId: string,
     query: Pick<ListEventsQueryDto, 'page' | 'pageSize'>,
-  ): Promise<PaginatedResult<EventWithVenue>> {
+  ): Promise<PaginatedResult<EventWithDetails>> {
     const where: Prisma.EventWhereInput = { organizerId };
 
     try {
       const [data, total] = await Promise.all([
         this.prisma.event.findMany({
           where,
-          include: { venue: true },
+          include: EVENT_DETAIL_INCLUDE,
           orderBy: { createdAt: 'desc' },
           skip: (query.page - 1) * query.pageSize,
           take: query.pageSize,
@@ -150,13 +177,13 @@ export class EventsService {
     }
   }
 
-  async findPublishedById(eventId: string): Promise<EventWithVenue> {
-    let event: EventWithVenue | null;
+  async findPublishedById(eventId: string): Promise<EventWithDetails> {
+    let event: EventWithDetails | null;
 
     try {
       event = await this.prisma.event.findFirst({
         where: { id: eventId, status: EventStatus.PUBLISHED },
-        include: { venue: true },
+        include: EVENT_DETAIL_INCLUDE,
       });
     } catch (error) {
       this.logger.error({ err: error }, 'Failed to look up published event');
@@ -170,6 +197,41 @@ export class EventsService {
     }
 
     return event;
+  }
+
+  async getSeatAvailability(
+    eventId: string,
+  ): Promise<SeatAvailabilityMap | null> {
+    let seatMap: SeatMapWithHolds | null;
+
+    try {
+      seatMap = await this.prisma.seatMap.findUnique({
+        where: { eventId },
+        include: {
+          seats: { include: { reservationSeats: { select: { id: true } } } },
+        },
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to look up seat availability');
+      throw error;
+    } finally {
+      this.logger.debug('Seat availability lookup completed');
+    }
+
+    if (!seatMap) {
+      return null;
+    }
+
+    return {
+      rows: seatMap.rows,
+      columns: seatMap.columns,
+      seats: seatMap.seats.map((seat) => ({
+        id: seat.id,
+        rowLabel: seat.rowLabel,
+        seatNumber: seat.seatNumber,
+        isAvailable: seat.reservationSeats.length === 0,
+      })),
+    };
   }
 
   private async findOwnedEventOrThrow(

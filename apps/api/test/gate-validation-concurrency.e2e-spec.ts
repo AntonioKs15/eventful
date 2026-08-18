@@ -1,6 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EventLayoutType, EventStatus, TicketStatus } from '@eventful/contracts';
+import {
+  EventLayoutType,
+  EventStatus,
+  TicketStatus,
+} from '@eventful/contracts';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -47,7 +51,9 @@ describe('Gate validation concurrency (e2e, live database)', () => {
   afterAll(async () => {
     await prisma.ticket.deleteMany({ where: { event: { venueId } } });
     await prisma.reservation.deleteMany({ where: { event: { venueId } } });
-    await prisma.generalAdmissionPool.deleteMany({ where: { event: { venueId } } });
+    await prisma.generalAdmissionPool.deleteMany({
+      where: { event: { venueId } },
+    });
     await prisma.event.deleteMany({ where: { venueId } });
     await prisma.venue.delete({ where: { id: venueId } });
     await app.close();
@@ -107,13 +113,19 @@ describe('Gate validation concurrency (e2e, live database)', () => {
         ),
       );
 
-      const valid = responses.filter((response) => response.body.result === 'VALID');
-      const alreadyUsed = responses.filter((response) => response.body.result === 'ALREADY_USED');
+      const valid = responses.filter(
+        (response) => response.body.result === 'VALID',
+      );
+      const alreadyUsed = responses.filter(
+        (response) => response.body.result === 'ALREADY_USED',
+      );
 
       expect(valid).toHaveLength(1);
       expect(alreadyUsed).toHaveLength(concurrentRequests - 1);
 
-      const finalTicket = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+      const finalTicket = await prisma.ticket.findUniqueOrThrow({
+        where: { id: ticket.id },
+      });
       expect(finalTicket.status).toBe(TicketStatus.USED);
     },
     CONCURRENCY_TEST_TIMEOUT_MS,

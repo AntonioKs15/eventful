@@ -14,6 +14,8 @@ export interface RotatedRefreshToken {
   userId: string;
 }
 
+const REUSE_GRACE_PERIOD_MS = 5000;
+
 @Injectable()
 export class RefreshTokenService {
   constructor(
@@ -54,7 +56,11 @@ export class RefreshTokenService {
     }
 
     if (record.revokedAt) {
-      await this.revokeAllForUser(record.userId);
+      const revokedWithinGracePeriod =
+        Date.now() - record.revokedAt.getTime() < REUSE_GRACE_PERIOD_MS;
+      if (!revokedWithinGracePeriod) {
+        await this.revokeAllForUser(record.userId);
+      }
       throw new RefreshTokenInvalidException();
     }
 

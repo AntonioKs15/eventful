@@ -74,12 +74,12 @@ describe('RefreshTokenService', () => {
       );
     });
 
-    it('treats reuse of an already-rotated token as theft and revokes the whole family', async () => {
+    it('treats reuse of a token revoked well outside the grace period as theft and revokes the whole family', async () => {
       const { service, prisma } = createService();
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'rt-1',
         userId: 'user-1',
-        revokedAt: new Date(),
+        revokedAt: new Date(Date.now() - 60 * 1000),
         expiresAt: new Date(Date.now() + 1000 * 60),
       });
 
@@ -90,6 +90,21 @@ describe('RefreshTokenService', () => {
         where: { userId: 'user-1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
       });
+    });
+
+    it('rejects, but does not punish the whole family, when the token was revoked moments ago (a benign race between two concurrent refreshes)', async () => {
+      const { service, prisma } = createService();
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        userId: 'user-1',
+        revokedAt: new Date(Date.now() - 200),
+        expiresAt: new Date(Date.now() + 1000 * 60),
+      });
+
+      await expect(service.rotate('raced-token')).rejects.toBeInstanceOf(
+        RefreshTokenInvalidException,
+      );
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
     });
 
     it('revokes the presented token and returns its owner for a valid rotation', async () => {
