@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.next
+**/coverage
+**/.turbo
+.git
+.env
+.env.local
+**/.env
+**/.env.local
+Desafio-Elite-Dev-2026.pdf

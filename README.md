@@ -28,6 +28,7 @@ Built for the Verzel Elite Dev challenge (`Desafio-Elite-Dev-2026.pdf`).
 | Monorepo | pnpm workspaces | [ADR 0013](docs/adr/0013-package-manager-and-monorepo.md) |
 | Payment | Explicit simulated approve/decline, no hidden randomness | [ADR 0015](docs/adr/0015-payment-simulation.md) |
 | Gate validation | One endpoint, one payload shape for camera and manual entry | [ADR 0016](docs/adr/0016-gate-validation-endpoint.md) |
+| Deployment | Vercel (web) + Render (API, Docker) + Neon (Postgres) | [ADR 0014](docs/adr/0014-deployment-topology.md) |
 
 Full ADR index: [`docs/adr/`](docs/adr/).
 
@@ -91,12 +92,47 @@ Swagger UI is served at `http://localhost:3333/docs` once the API is running.
 without crashing the process on a transient outage (see the note in
 [ADR 0002](docs/adr/0002-database-and-migrations.md)).
 
+## Running the full stack in Docker (optional)
+
+`docker-compose.yml` can also run the API and web app themselves, not just Postgres — useful for
+exercising the exact images that ship to production without needing Neon, Render, or Vercel
+accounts:
+
+```bash
+docker compose up --build
+```
+
+This builds `apps/api/Dockerfile` and `apps/web/Dockerfile`, runs `prisma migrate deploy`
+automatically on API startup, and serves the API on `http://localhost:3333` and the web app on
+`http://localhost:3000`. It uses fixed local secrets baked into `docker-compose.yml` — fine for a
+throwaway local stack, never reused for a real deployment.
+
 ## Deployment
 
-Target: Vercel (web) + Render/Railway (API) + Neon (Postgres) — the whole app is already
-environment-variable-driven for exactly this. Deployment itself hasn't shipped yet; when it does,
-its topology and the resulting cross-origin cookie decisions will be written up as ADR 0014 and
-linked here.
+Topology: **Vercel** (web) + **Render** (API, deployed as a Docker web service from
+`apps/api/Dockerfile` via the `render.yaml` blueprint) + **Neon** (Postgres). Full rationale,
+alternatives considered, and the cross-origin cookie wiring in
+[ADR 0014](docs/adr/0014-deployment-topology.md).
+
+1. Push this repository to GitHub (both Render and Vercel deploy from a connected Git repo).
+2. **API on Render**: in the Render dashboard, "New" → "Blueprint", point it at the repo — it
+   reads `render.yaml` and creates the `eventful-api` web service. Fill in the secret env vars it
+   leaves blank (`DATABASE_URL` from Neon, `JWT_ACCESS_SECRET` / `QR_HMAC_SECRET` as long random
+   strings, optionally `TICKETMASTER_API_KEY`); leave `CORS_ORIGIN` blank for now. Render builds
+   the Docker image, runs `prisma migrate deploy` as the pre-deploy step, and starts the service.
+3. **Web on Vercel**: "Add New" → "Project", import the same repo, set **Root Directory** to
+   `apps/web` and enable "Include files outside the root directory" (needed to resolve the pnpm
+   workspace's `@eventful/contracts` package — `apps/web/vercel.json` handles the actual
+   install/build commands). Set `NEXT_PUBLIC_API_URL` to the Render service's URL
+   (`https://eventful-api.onrender.com`, or whatever Render assigned).
+4. Back on Render, set `CORS_ORIGIN` to the live Vercel URL (`https://<project>.vercel.app`) and
+   redeploy the API so the new value takes effect.
+5. Verify: `https://<render-url>/health` returns `{"status":"ok"}`, `https://<render-url>/docs`
+   loads Swagger, and the Vercel URL can log in (proves the cross-origin cookie round-trip works).
+
+Vercel preview deployments (per-PR/branch URLs) are a known limitation here: they get a different
+origin than the one `CORS_ORIGIN` is set to, so preview builds will hit CORS errors calling the
+live API — see the Consequences section of ADR 0014.
 
 ## Known limitations
 

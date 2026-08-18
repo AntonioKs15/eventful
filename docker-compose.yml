@@ -16,5 +16,39 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://eventful:eventful@postgres:5432/eventful?schema=public
+      JWT_ACCESS_SECRET: local-docker-compose-access-secret
+      JWT_ACCESS_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN_DAYS: 30
+      QR_HMAC_SECRET: local-docker-compose-qr-secret
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
+    ports:
+      - "3333:3333"
+    command: sh -c "pnpm --filter @eventful/api prisma:deploy && node apps/api/dist/src/main.js"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3333
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
 volumes:
   eventful_postgres_data:

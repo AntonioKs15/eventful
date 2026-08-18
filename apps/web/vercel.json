@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter @eventful/contracts build && pnpm --filter @eventful/web build",
+  "outputDirectory": ".next"
+}

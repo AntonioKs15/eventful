@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: eventful-api
+    runtime: docker
+    dockerfilePath: apps/api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    preDeployCommand: pnpm --filter @eventful/api prisma:deploy
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3333
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRES_IN_DAYS
+        value: 30
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: QR_HMAC_SECRET
+        sync: false
+      - key: TICKETMASTER_API_KEY
+        sync: false
