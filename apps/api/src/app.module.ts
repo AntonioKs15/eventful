@@ -13,6 +13,7 @@ import { configurationFactories } from './config/configuration';
 import { NodeEnvironment } from './config/node-environment.enum';
 import { validateEnvironment } from './config/env.validation';
 import { EventsModule } from './events/events.module';
+import { GateModule } from './gate/gate.module';
 import { HealthModule } from './health/health.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -59,6 +60,7 @@ function resolveRequestId(request: IncomingMessage): string {
     ReservationsModule,
     TicketsModule,
     PaymentsModule,
+    GateModule,
     HealthModule,
   ],
   providers: [
