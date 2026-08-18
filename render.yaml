@@ -6,7 +6,6 @@ services:
     dockerContext: .
     plan: free
     healthCheckPath: /health
-    preDeployCommand: pnpm --filter @eventful/api prisma:deploy
     envVars:
       - key: NODE_ENV
         value: production

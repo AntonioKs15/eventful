@@ -119,7 +119,8 @@ alternatives considered, and the cross-origin cookie wiring in
    reads `render.yaml` and creates the `eventful-api` web service. Fill in the secret env vars it
    leaves blank (`DATABASE_URL` from Neon, `JWT_ACCESS_SECRET` / `QR_HMAC_SECRET` as long random
    strings, optionally `TICKETMASTER_API_KEY`); leave `CORS_ORIGIN` blank for now. Render builds
-   the Docker image, runs `prisma migrate deploy` as the pre-deploy step, and starts the service.
+   the Docker image and starts the service; `prisma migrate deploy` runs automatically as part of
+   the container's start command, before the API begins listening.
 3. **Web on Vercel**: "Add New" → "Project", import the same repo, set **Root Directory** to
    `apps/web` and enable "Include files outside the root directory" (needed to resolve the pnpm
    workspace's `@eventful/contracts` package — `apps/web/vercel.json` handles the actual

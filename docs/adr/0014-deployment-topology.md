@@ -28,10 +28,14 @@ the env vars above — not new application logic.
 - **API → Render**, as a Docker web service built from `apps/api/Dockerfile`
   (`docker-context: .` — the repo root, since the pnpm workspace lockfile lives there), deployed
   via the `render.yaml` blueprint at the repo root (config-as-code, not manual dashboard clicking).
-  `prisma migrate deploy` runs as Render's **pre-deploy command**
-  (`pnpm --filter @eventful/api prisma:deploy`), not baked into the container's `CMD` — if Render
-  ever scales the API to more than one instance, a migration embedded in every container's startup
-  would race; a single pre-deploy step runs once, before the new release takes traffic.
+  `prisma migrate deploy` runs as part of the container's own `CMD`
+  (`pnpm --filter @eventful/api prisma:deploy && node apps/api/dist/src/main.js`). The original
+  intent was to run it as Render's pre-deploy command instead — a single step, once, before the
+  new release takes traffic — but Render's free tier rejects `preDeployCommand` outright ("not
+  supported for free tier services"), so it moved into the startup command. This is safe here
+  specifically because a free-tier Render web service only ever runs one instance: there is no
+  second container that could race the same migration. `prisma migrate deploy` is also idempotent
+  (it only applies pending migrations), so a restart re-running it is a no-op, not a hazard.
 - **Postgres → Neon**, reaffirming ADR 0002's existing choice for the production topology
   specifically (not re-litigated here).
 - Production URL wiring: Render's `CORS_ORIGIN` env var is set to the live Vercel URL
@@ -62,9 +66,12 @@ the env vars above — not new application logic.
   branch; Render auto-deploys `apps/api` from `render.yaml` + `apps/api/Dockerfile` on the same
   trigger. Neither app needs to know the other was redeployed — they only share the two env vars
   above.
-- `prisma migrate deploy` is a step in Render's release process, not a command a human runs by hand
-  before each production release — a schema change ships the moment its migration file is merged,
-  same as ADR 0002 already implies.
+- `prisma migrate deploy` runs automatically every time the API container starts, not as a command
+  a human runs by hand before each production release — a schema change ships the moment its
+  migration file is merged, same as ADR 0002 already implies. If this service is ever moved off
+  the free tier to a plan that runs multiple instances, this should move back to a real pre-deploy
+  step (now available on paid plans) to avoid two containers racing the same migration on a
+  simultaneous cold start.
 - **Vercel preview deployments get a fresh, random origin per PR/branch.** `CORS_ORIGIN` on Render
   only ever points at the one production Vercel URL, so preview deployments will get CORS errors
   calling the live API. Documented here as a known limitation (same spirit as the README's existing

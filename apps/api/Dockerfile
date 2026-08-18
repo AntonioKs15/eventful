@@ -18,4 +18,4 @@ FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /repo /repo
 EXPOSE 3333
-CMD ["node", "apps/api/dist/src/main.js"]
+CMD ["sh", "-c", "pnpm --filter @eventful/api prisma:deploy && node apps/api/dist/src/main.js"]
