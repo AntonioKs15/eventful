@@ -7,6 +7,16 @@ with a hard guarantee that no seat sells twice and no ticket validates twice.
 
 Built for the Verzel Elite Dev challenge (`Desafio-Elite-Dev-2026.pdf`).
 
+## Live demo
+
+- **App**: https://eventful-web-five.vercel.app
+- **API**: https://eventful-api-kibo.onrender.com ([`/docs`](https://eventful-api-kibo.onrender.com/docs) for Swagger, [`/health`](https://eventful-api-kibo.onrender.com/health) for liveness)
+
+Deployed per [ADR 0014](docs/adr/0014-deployment-topology.md) (Vercel + Render + Neon). Use any of
+the [seeded accounts](#seeded-accounts) below to log in — password `ChangeMe123!` for all of them.
+The API's free-tier Render instance spins down after inactivity, so the first request after a
+while can take up to ~30s to wake it back up.
+
 ## Stack
 
 | Layer | Choice | Why |
