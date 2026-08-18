@@ -1,6 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EventLayoutType, EventStatus, ReservationStatus } from '@eventful/contracts';
+import {
+  EventLayoutType,
+  EventStatus,
+  ReservationStatus,
+} from '@eventful/contracts';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -42,11 +46,17 @@ describe('Reservation concurrency (e2e, live database)', () => {
   });
 
   afterAll(async () => {
-    await prisma.reservationSeat.deleteMany({ where: { seat: { seatMap: { event: { venueId } } } } });
+    await prisma.reservationSeat.deleteMany({
+      where: { seat: { seatMap: { event: { venueId } } } },
+    });
     await prisma.reservation.deleteMany({ where: { event: { venueId } } });
-    await prisma.seat.deleteMany({ where: { seatMap: { event: { venueId } } } });
+    await prisma.seat.deleteMany({
+      where: { seatMap: { event: { venueId } } },
+    });
     await prisma.seatMap.deleteMany({ where: { event: { venueId } } });
-    await prisma.generalAdmissionPool.deleteMany({ where: { event: { venueId } } });
+    await prisma.generalAdmissionPool.deleteMany({
+      where: { event: { venueId } },
+    });
     await prisma.event.deleteMany({ where: { venueId } });
     await prisma.venue.delete({ where: { id: venueId } });
     await app.close();
@@ -127,7 +137,11 @@ describe('Reservation concurrency (e2e, live database)', () => {
           layoutType: EventLayoutType.SEATED,
           status: EventStatus.PUBLISHED,
           seatMap: {
-            create: { rows: 1, columns: 1, seats: { create: [{ rowLabel: 'A', seatNumber: 1 }] } },
+            create: {
+              rows: 1,
+              columns: 1,
+              seats: { create: [{ rowLabel: 'A', seatNumber: 1 }] },
+            },
           },
         },
         include: { seatMap: { include: { seats: true } } },
@@ -152,7 +166,9 @@ describe('Reservation concurrency (e2e, live database)', () => {
         expect(response.body.error.code).toBe('SEAT_ALREADY_TAKEN');
       });
 
-      const holds = await prisma.reservationSeat.count({ where: { seatId: contestedSeatId } });
+      const holds = await prisma.reservationSeat.count({
+        where: { seatId: contestedSeatId },
+      });
       expect(holds).toBe(1);
     },
     CONCURRENCY_TEST_TIMEOUT_MS,

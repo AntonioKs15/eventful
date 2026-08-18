@@ -14,8 +14,10 @@ import { NodeEnvironment } from './config/node-environment.enum';
 import { validateEnvironment } from './config/env.validation';
 import { EventsModule } from './events/events.module';
 import { HealthModule } from './health/health.module';
+import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { TicketsModule } from './tickets/tickets.module';
 import { VenuesModule } from './venues/venues.module';
 
 function resolveRequestId(request: IncomingMessage): string {
@@ -55,6 +57,8 @@ function resolveRequestId(request: IncomingMessage): string {
     VenuesModule,
     EventsModule,
     ReservationsModule,
+    TicketsModule,
+    PaymentsModule,
     HealthModule,
   ],
   providers: [
