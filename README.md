@@ -1,4 +1,4 @@
-# Eventful — Events & Ticketing Platform
+# VisionMax — Movie Ticketing Platform
 
 An organizer builds a movie catalog (from TMDb or by hand) and schedules showtimes at a venue
 (from Ticketmaster Discovery or by hand); a customer browses what's playing, reserves a seat or
@@ -170,6 +170,13 @@ live API — see the Consequences section of ADR 0014.
   could not be exhaustively tested against physical scan conditions (lighting, printed vs. screen
   codes) in this environment. Manual code entry is a first-class fallback, not an afterthought,
   and shares the exact same validation endpoint and result states.
+- **Search is by movie title only**, not free text across events or venues — there's no
+  standalone "search events" box. In practice the movie → showtimes path covers discovery, since
+  every event is a screening of a movie, but a venue/location-name search is not implemented.
+- **Organizers can edit a movie's own details after creation, but not an event/showtime** once
+  it's created — no reschedule or cancel flow for an already-published session. The movie catalog
+  (title, synopsis, rating, poster, trailer, etc.) is editable via `PATCH /movies/:id` and its
+  organizer UI; event scheduling is create-only.
 
 ## AI usage
 

@@ -71,7 +71,7 @@ export class CreateMovieDto {
   @ApiPropertyOptional({ enum: MovieStatus, default: MovieStatus.COMING_SOON })
   @IsOptional()
   @IsEnum(MovieStatus)
-  status: MovieStatus = MovieStatus.COMING_SOON;
+  status?: MovieStatus;
 
   @ApiPropertyOptional()
   @IsOptional()

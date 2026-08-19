@@ -24,7 +24,7 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Eventful",
+  title: "VisionMax",
   description:
     "Browse movies, pick your showtime, choose your seats, and walk in with a ticket that cannot be faked.",
 };

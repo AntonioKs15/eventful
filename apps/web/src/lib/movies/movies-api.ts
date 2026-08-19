@@ -64,6 +64,13 @@ export function createMovie(input: CreateMovieInput): Promise<MovieSummary> {
   return apiRequest("/movies", { method: "POST", body: input });
 }
 
+export function updateMovie(
+  id: string,
+  input: Partial<CreateMovieInput>,
+): Promise<MovieSummary> {
+  return apiRequest(`/movies/${id}`, { method: "PATCH", body: input });
+}
+
 export function attachCast(movieId: string, input: AttachCastInput) {
   return apiRequest(`/movies/${movieId}/cast`, { method: "POST", body: input });
 }

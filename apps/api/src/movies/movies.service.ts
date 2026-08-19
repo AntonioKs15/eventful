@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Movie, MovieActor, Prisma } from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
-import { buildPaginationMeta, PaginatedResult } from '@eventful/contracts';
+import {
+  buildPaginationMeta,
+  MovieStatus,
+  PaginatedResult,
+} from '@eventful/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActorsService } from '../actors/actors.service';
 import { AttachCastDto } from './dto/attach-cast.dto';
@@ -38,7 +42,9 @@ export class MoviesService {
 
   async create(dto: CreateMovieDto): Promise<Movie> {
     try {
-      return await this.prisma.movie.create({ data: dto });
+      return await this.prisma.movie.create({
+        data: { ...dto, status: dto.status ?? MovieStatus.COMING_SOON },
+      });
     } catch (error) {
       this.logger.error({ err: error }, 'Failed to create movie');
       throw error;

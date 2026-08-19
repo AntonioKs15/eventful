@@ -322,6 +322,43 @@ async function fetchTmdbCast(
   }
 }
 
+interface TmdbVideo {
+  key: string;
+  site: string;
+  type: string;
+  official: boolean;
+}
+
+async function fetchTmdbTrailerUrl(
+  id: number,
+  apiKey: string,
+): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apiKey}&language=en-US`,
+    );
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as { results?: TmdbVideo[] };
+    const videos = payload.results ?? [];
+    const trailer =
+      videos.find(
+        (video) =>
+          video.site === 'YouTube' &&
+          video.type === 'Trailer' &&
+          video.official,
+      ) ??
+      videos.find(
+        (video) => video.site === 'YouTube' && video.type === 'Trailer',
+      );
+
+    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+  } catch {
+    return null;
+  }
+}
+
 async function upsertTmdbActor(name: string, photoUrl: string | null) {
   const existing = await prisma.actor.findFirst({ where: { name } });
   if (existing) {
@@ -427,6 +464,14 @@ async function seedMoviesFromTmdb(organizerId: string, venueId: string) {
 
     const cast = await fetchTmdbCast(id, apiKey);
     await seedCastForMovie(movie.id, cast);
+
+    const trailerUrl = await fetchTmdbTrailerUrl(id, apiKey);
+    if (trailerUrl && !movie.trailerUrl) {
+      await prisma.movie.update({
+        where: { id: movie.id },
+        data: { trailerUrl },
+      });
+    }
   }
 }
 
@@ -529,6 +574,38 @@ async function seedNotifications(userId: string) {
   });
 }
 
+const HARDCODED_MOVIE_TMDB_IDS: Record<string, number> = {
+  'Black Panther': 284054,
+  'The Marvels': 609681,
+};
+
+async function seedTrailersForHardcodedMovies() {
+  const apiKey = process.env.TMDB_API_KEY;
+  if (!apiKey) {
+    return;
+  }
+
+  for (const [title, tmdbId] of Object.entries(HARDCODED_MOVIE_TMDB_IDS)) {
+    const movie = await prisma.movie.findFirst({ where: { title } });
+    if (!movie || movie.trailerUrl) {
+      continue;
+    }
+
+    const trailerUrl = await fetchTmdbTrailerUrl(tmdbId, apiKey);
+    if (!trailerUrl) {
+      continue;
+    }
+
+    await prisma.movie.update({
+      where: { id: movie.id },
+      data: {
+        trailerUrl,
+        catalogSourceId: movie.catalogSourceId ?? String(tmdbId),
+      },
+    });
+  }
+}
+
 async function main() {
   const passwordHash = await argon2.hash(SEED_PASSWORD);
   const { organizer, customerOne } = await seedUsers(passwordHash);
@@ -544,6 +621,7 @@ async function main() {
   await seedTicketAndReview(customerOne.id, seatedEvent.id, nowPlaying.id);
   await seedNotifications(customerOne.id);
   await seedMoviesFromTmdb(organizer.id, venue.id);
+  await seedTrailersForHardcodedMovies();
 
   console.log(
     'Seed completed. Shared password for all seeded users:',

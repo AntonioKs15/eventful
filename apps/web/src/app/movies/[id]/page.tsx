@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { formatDayNumber, formatEventTime, formatWeekdayShort, toDateKey } from "@/lib/format";
 import { getMovie, getMovieReviews, getMovieShowtimes, listMovies } from "@/lib/movies/movies-api";
 import { createReview } from "@/lib/reviews/reviews-api";
+import { extractYoutubeId } from "@/lib/youtube";
 
 type TabKey = "overview" | "showtimes" | "reviews";
 
@@ -56,6 +57,7 @@ export default function MovieDetailPage() {
           className="object-cover"
           priority
         />
+        <TrailerBackdrop trailerUrl={movie.trailerUrl} />
         <div className="absolute inset-0 bg-gradient-to-t from-surface-950 via-surface-950/60 to-transparent" />
       </div>
 
@@ -110,6 +112,22 @@ export default function MovieDetailPage() {
           {tab === "reviews" ? <ReviewsTab movieId={movie.id} /> : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function TrailerBackdrop({ trailerUrl }: { trailerUrl: string | null }) {
+  const videoId = trailerUrl ? extractYoutubeId(trailerUrl) : null;
+
+  if (!videoId) {
+    return null;
+  }
+
+  const src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3`;
+
+  return (
+    <div className="video-cover-wrapper" aria-hidden="true">
+      <iframe src={src} title="Trailer" allow="autoplay; encrypted-media" />
     </div>
   );
 }

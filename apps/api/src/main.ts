@@ -29,8 +29,8 @@ async function bootstrap(): Promise<void> {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Eventful API')
-    .setDescription('Events and ticketing platform API')
+    .setTitle('VisionMax API')
+    .setDescription('Movie ticketing platform API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

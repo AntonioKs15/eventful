@@ -218,6 +218,12 @@ function OrganizerMoviesResults({
               <p className="text-sm text-surface-400">{movie.status}</p>
             </div>
             <Link
+              href={`/organizer/movies/${movie.id}/edit`}
+              className="focus-ring rounded-full border border-surface-700 px-4 py-1.5 text-xs font-medium text-foreground hover:border-accent hover:text-accent"
+            >
+              Edit
+            </Link>
+            <Link
               href={`/organizer/movies/${movie.id}/cast`}
               className="focus-ring rounded-full border border-surface-700 px-4 py-1.5 text-xs font-medium text-foreground hover:border-accent hover:text-accent"
             >
