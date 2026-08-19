@@ -57,6 +57,18 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   TMDB_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  STRIPE_SECRET_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  STRIPE_WEBHOOK_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  STRIPE_PRICE_ID?: string;
 }
 
 export function validateEnvironment(

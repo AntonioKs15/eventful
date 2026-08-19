@@ -22,6 +22,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { VenuesModule } from './venues/venues.module';
 
@@ -63,6 +64,7 @@ function resolveRequestId(request: IncomingMessage): string {
     EventsModule,
     ReservationsModule,
     TicketsModule,
+    SubscriptionsModule,
     PaymentsModule,
     GateModule,
     HealthModule,

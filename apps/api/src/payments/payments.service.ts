@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Event, Payment, Reservation, Ticket } from '@prisma/client';
+import {
+  Event,
+  Payment,
+  PaymentMethod,
+  Reservation,
+  Ticket,
+} from '@prisma/client';
 import { PinoLogger } from 'nestjs-pino';
 import {
   EventLayoutType,
@@ -15,6 +21,7 @@ import { ReservationNotFoundException } from '../reservations/exceptions/reserva
 import { ReservationNotOwnedException } from '../reservations/exceptions/reservation-not-owned.exception';
 import { ReservationTransactionClient } from '../reservations/strategies/allocation-strategy.interface';
 import { AllocationStrategyFactory } from '../reservations/strategies/allocation-strategy.factory';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { PaymentAlreadyProcessedException } from './exceptions/payment-already-processed.exception';
 import { ReservationExpiredException } from './exceptions/reservation-expired.exception';
@@ -41,6 +48,7 @@ export class PaymentsService {
     private readonly allocationStrategyFactory: AllocationStrategyFactory,
     private readonly ticketsService: TicketsService,
     private readonly notificationsService: NotificationsService,
+    private readonly subscriptionsService: SubscriptionsService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(PaymentsService.name);
@@ -84,6 +92,65 @@ export class PaymentsService {
     // Outside the payment transaction on purpose: a notification failure must
     // never roll back a successful payment/ticket-issuance.
     await this.notifyOutcome(reservation, outcome);
+
+    return result;
+  }
+
+  async redeemWithSubscription(
+    customerId: string,
+    reservationId: string,
+  ): Promise<PaymentResult> {
+    const reservation = await this.findOwnedReservationOrThrow(
+      customerId,
+      reservationId,
+    );
+
+    const existingPayment = await this.prisma.payment.findUnique({
+      where: { reservationId },
+    });
+    if (existingPayment) {
+      throw new PaymentAlreadyProcessedException();
+    }
+
+    let result: PaymentResult;
+    try {
+      result = await this.prisma.$transaction(async (tx) => {
+        await this.claimReservationOrThrow(
+          tx,
+          reservation.id,
+          ReservationStatus.CONFIRMED,
+        );
+
+        const tickets = await this.ticketsService.issueForReservation(
+          tx,
+          reservation,
+        );
+
+        await this.subscriptionsService.consumeFreeTickets(
+          tx,
+          customerId,
+          tickets.length,
+        );
+
+        const payment = await tx.payment.create({
+          data: {
+            reservationId: reservation.id,
+            amountCents: 0,
+            status: PaymentStatus.APPROVED,
+            method: PaymentMethod.SUBSCRIPTION_REDEMPTION,
+          },
+        });
+
+        return { payment, tickets };
+      });
+    } catch (error) {
+      this.logger.warn({ err: error }, 'Subscription ticket redemption failed');
+      throw error;
+    } finally {
+      this.logger.debug('Subscription ticket redemption attempt completed');
+    }
+
+    await this.notifyOutcome(reservation, PaymentOutcome.APPROVE);
 
     return result;
   }

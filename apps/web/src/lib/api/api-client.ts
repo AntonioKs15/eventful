@@ -103,5 +103,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  // NestJS sends an empty body (not the literal "null") for handlers that return
+  // null/undefined, even with a 200 status — response.json() would throw on that.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : null) as T;
 }

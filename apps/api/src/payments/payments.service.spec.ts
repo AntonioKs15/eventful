@@ -50,12 +50,14 @@ function createService() {
   };
   const ticketsService = { issueForReservation: jest.fn() };
   const notificationsService = { create: jest.fn() };
+  const subscriptionsService = { consumeFreeTickets: jest.fn() };
 
   const service = new PaymentsService(
     prisma as never,
     allocationStrategyFactory as never,
     ticketsService as never,
     notificationsService as never,
+    subscriptionsService as never,
     createMockLogger() as never,
   );
 
@@ -66,6 +68,7 @@ function createService() {
     strategy,
     ticketsService,
     notificationsService,
+    subscriptionsService,
   };
 }
 
@@ -212,5 +215,80 @@ describe('PaymentsService.pay', () => {
       expect(ticketsService.issueForReservation).not.toHaveBeenCalled();
       expect(result.tickets).toEqual([]);
     });
+  });
+});
+
+describe('PaymentsService.redeemWithSubscription', () => {
+  it('throws PaymentAlreadyProcessedException when a payment already exists', async () => {
+    const { service, prisma } = createService();
+    prisma.reservation.findUnique.mockResolvedValue(seatedReservation);
+    prisma.payment.findUnique.mockResolvedValue({ id: 'payment-1' });
+
+    await expect(
+      service.redeemWithSubscription('customer-1', 'reservation-1'),
+    ).rejects.toBeInstanceOf(PaymentAlreadyProcessedException);
+  });
+
+  it('confirms the reservation, issues tickets, consumes the matching number of free tickets, and records a zero-amount payment', async () => {
+    const { service, prisma, fakeTx, ticketsService, subscriptionsService } =
+      createService();
+    prisma.reservation.findUnique.mockResolvedValue(seatedReservation);
+    prisma.payment.findUnique.mockResolvedValue(null);
+    fakeTx.reservation.updateMany.mockResolvedValue({ count: 1 });
+    fakeTx.payment.create.mockResolvedValue({
+      id: 'payment-1',
+      amountCents: 0,
+      status: 'APPROVED',
+    });
+    ticketsService.issueForReservation.mockResolvedValue([
+      { id: 'ticket-1' },
+      { id: 'ticket-2' },
+    ]);
+    subscriptionsService.consumeFreeTickets.mockResolvedValue(undefined);
+
+    const result = await service.redeemWithSubscription(
+      'customer-1',
+      'reservation-1',
+    );
+
+    expect(fakeTx.reservation.updateMany).toHaveBeenCalledWith({
+      where: { id: 'reservation-1', status: ReservationStatus.PENDING },
+      data: { status: ReservationStatus.CONFIRMED },
+    });
+    expect(subscriptionsService.consumeFreeTickets).toHaveBeenCalledWith(
+      fakeTx,
+      'customer-1',
+      2,
+    );
+    expect(fakeTx.payment.create).toHaveBeenCalledWith({
+      data: {
+        reservationId: 'reservation-1',
+        amountCents: 0,
+        status: 'APPROVED',
+        method: 'SUBSCRIPTION_REDEMPTION',
+      },
+    });
+    expect(result.tickets).toHaveLength(2);
+  });
+
+  it('propagates the exception from an insufficient free-ticket balance and rolls back', async () => {
+    const { service, prisma, fakeTx, ticketsService, subscriptionsService } =
+      createService();
+    prisma.reservation.findUnique.mockResolvedValue(seatedReservation);
+    prisma.payment.findUnique.mockResolvedValue(null);
+    fakeTx.reservation.updateMany.mockResolvedValue({ count: 1 });
+    ticketsService.issueForReservation.mockResolvedValue([
+      { id: 'ticket-1' },
+      { id: 'ticket-2' },
+    ]);
+    const insufficientBalanceError = new Error('not enough free tickets');
+    subscriptionsService.consumeFreeTickets.mockRejectedValue(
+      insufficientBalanceError,
+    );
+
+    await expect(
+      service.redeemWithSubscription('customer-1', 'reservation-1'),
+    ).rejects.toBe(insufficientBalanceError);
+    expect(fakeTx.payment.create).not.toHaveBeenCalled();
   });
 });

@@ -117,3 +117,42 @@ content, per CSS stacking rules, regardless of DOM order) and fix (`relative z-1
 overlapping content) are a one-line diff, but the bug was live in production for one push-and-redeploy
 cycle before this same live-testing habit — inherited from the original build's approach,
 documented above — caught it.
+
+## The subscription pass: a directed choice between two real architectures
+
+A later session added a subscription (2 free tickets/month). Before any code was written, the
+person directing the work was asked directly how billing should work — not defaulted into
+whichever was easiest to type. The two real options were named explicitly (a no-gateway simulated
+subscription record, matching the rest of the checkout's ADR 0015 approach; or real recurring
+billing through an actual payment provider's test mode), and the answer was the real gateway,
+after being told plainly what that would cost (an external Stripe account, test-mode API keys
+supplied by them into `apps/api/.env`, and materially more implementation surface: webhooks, raw
+request bodies, a billing cycle). That trade was made with full information, not discovered
+partway through.
+
+**What was AI-driven**: the entire implementation once the direction was set — the `Subscription`
+Prisma model and its webhook-driven state machine, the Stripe Checkout/Billing Portal integration,
+folding free-ticket redemption into the existing `PaymentsService` as a sibling to `pay()` rather
+than a parallel checkout path, and [ADR 0017](adr/0017-subscription-billing.md) itself (including
+naming and rejecting the "just add a webhook_events table" idempotency option, on the grounds that
+every handler here already converges to the same state on a replayed event).
+
+**What surfaced a real, non-obvious bug**: while researching Stripe's current API shape before
+writing the webhook handlers, checking the installed SDK's own type definitions (rather than
+assuming from prior knowledge) turned up that recent Stripe API versions moved
+`current_period_start`/`current_period_end` off the `Subscription` object onto each
+`SubscriptionItem`, and moved `invoice.subscription` to `invoice.parent.subscription_details
+.subscription`. Code written from memory alone would have compiled, looked plausible, and
+silently read `undefined` for the billing period on every renewal — the kind of bug that only
+shows up once real webhook traffic arrives. This is also why `apiVersion` was deliberately left
+unpinned on the Stripe client (the installed SDK's own default): the code was written and typed
+against whatever version actually ships with `stripe@22.5.0`, not a version guessed from general
+knowledge that might not match.
+
+**A boot-safety fix made along the way, not asked for but consistent with the rest of the repo**:
+the first draft of the Stripe client provider threw at application startup if `STRIPE_SECRET_KEY`
+was missing, which would have broken `pnpm dev`/`pnpm build` for anyone who hasn't set up Stripe —
+inconsistent with how `TICKETMASTER_API_KEY`/`TMDB_API_KEY` already degrade gracefully elsewhere
+in this codebase. It was changed so the app always boots, and each subscription entry point checks
+for its own required configuration and fails with a specific, actionable message only when
+actually used.

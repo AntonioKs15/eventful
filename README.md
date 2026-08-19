@@ -70,6 +70,8 @@ cp apps/web/.env.example apps/web/.env.local
 # edit apps/api/.env: set DATABASE_URL (Neon or local Docker Postgres),
 # generate real values for JWT_ACCESS_SECRET and QR_HMAC_SECRET, and
 # optionally set TICKETMASTER_API_KEY and/or TMDB_API_KEY
+# (see "Subscription billing (Stripe)" below for STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET /
+# STRIPE_PRICE_ID — the app boots fine without them, but the subscription feature needs them)
 
 pnpm prisma:migrate   # applies all committed migrations
 pnpm prisma:seed      # seeds the four users below + two published events
@@ -98,6 +100,23 @@ plus a general-admission **Summer Sound Festival** event, covering both allocati
 to end; and, for Carlos, an already-issued ticket for that showtime plus a review for Black Panther
 — so the review-eligibility gate (only ticket holders can review) has something to show on first
 login instead of needing to be walked through by hand.
+
+### Subscription billing (Stripe)
+
+The subscription feature (`/subscription`) uses real Stripe test-mode billing — see
+[ADR 0017](docs/adr/0017-subscription-billing.md) for why. The app boots and runs fine without
+any of this configured; only subscribing, managing, or redeeming a free ticket needs it.
+
+1. Create a free Stripe account and, from the Dashboard (test mode), go to **Developers → API
+   keys** and copy the **Secret key** (`sk_test_...`) into `apps/api/.env` as
+   `STRIPE_SECRET_KEY`.
+2. Create a recurring monthly **Product/Price** for the plan (Dashboard → Product catalog, or via
+   the API) and put its id (`price_...`) into `STRIPE_PRICE_ID`.
+3. For local webhook delivery, install the [Stripe CLI](https://docs.stripe.com/stripe-cli), run
+   `stripe login` once, then keep `stripe listen --forward-to localhost:3333/subscriptions/webhook`
+   running while you test — it prints a `whsec_...` value to put in `STRIPE_WEBHOOK_SECRET`.
+4. In production, create a webhook endpoint in the Stripe Dashboard pointing at
+   `<api-url>/subscriptions/webhook` and use *that* endpoint's signing secret instead.
 
 ### API docs
 
@@ -135,8 +154,9 @@ alternatives considered, and the cross-origin cookie wiring in
 2. **API on Render**: in the Render dashboard, "New" → "Blueprint", point it at the repo — it
    reads `render.yaml` and creates the `eventful-api` web service. Fill in the secret env vars it
    leaves blank (`DATABASE_URL` from Neon, `JWT_ACCESS_SECRET` / `QR_HMAC_SECRET` as long random
-   strings, optionally `TICKETMASTER_API_KEY` and/or `TMDB_API_KEY`); leave `CORS_ORIGIN` blank for
-   now. Render builds
+   strings, optionally `TICKETMASTER_API_KEY` and/or `TMDB_API_KEY`, and `STRIPE_SECRET_KEY` /
+   `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` if the subscription feature should work live — see
+   "Subscription billing (Stripe)" above); leave `CORS_ORIGIN` blank for now. Render builds
    the Docker image and starts the service; `prisma migrate deploy` runs automatically as part of
    the container's start command, before the API begins listening.
 3. **Web on Vercel**: "Add New" → "Project", import the same repo, set **Root Directory** to

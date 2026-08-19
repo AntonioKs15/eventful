@@ -5,6 +5,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequestUser } from '../auth/strategies/jwt-access.strategy';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RedeemFreeTicketDto } from './dto/redeem-free-ticket.dto';
 import { PaymentResult, PaymentsService } from './payments.service';
 
 @ApiTags('payments')
@@ -26,6 +27,22 @@ export class PaymentsController {
       user.userId,
       body.reservationId,
       body.outcome,
+    );
+  }
+
+  @Roles(UserRole.CUSTOMER)
+  @Post('redeem-with-subscription')
+  @ApiOperation({
+    summary:
+      "Settles a reservation using the customer's monthly subscription free-ticket allowance instead of paying.",
+  })
+  redeemWithSubscription(
+    @CurrentUser() user: AuthenticatedRequestUser,
+    @Body() body: RedeemFreeTicketDto,
+  ): Promise<PaymentResult> {
+    return this.paymentsService.redeemWithSubscription(
+      user.userId,
+      body.reservationId,
     );
   }
 }

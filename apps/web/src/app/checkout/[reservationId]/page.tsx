@@ -1,15 +1,18 @@
 "use client";
 
-import { EventLayoutType, PaymentOutcome } from "@eventful/contracts";
+import { EventLayoutType, PaymentOutcome, SubscriptionStatus } from "@eventful/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { Button } from "@/components/ui/button";
 import { formatEventDate, formatPriceCents } from "@/lib/format";
+import { pay, redeemWithSubscription } from "@/lib/payments/payments-api";
+import type { PaymentResult } from "@/lib/payments/payments-api";
 import { formatCountdown } from "@/lib/reservations/format-countdown";
 import { getReservation } from "@/lib/reservations/reservations-api";
-import { pay } from "@/lib/payments/payments-api";
+import type { Subscription } from "@/lib/subscriptions/subscriptions-api";
+import { getMySubscription } from "@/lib/subscriptions/subscriptions-api";
 
 function useMillisecondsRemaining(expiresAt: string | undefined): number {
   const [now, setNow] = useState(() => Date.now());
@@ -25,6 +28,53 @@ function useMillisecondsRemaining(expiresAt: string | undefined): number {
   return new Date(expiresAt).getTime() - now;
 }
 
+function createPaymentResultHandler(
+  router: ReturnType<typeof useRouter>,
+  reservationId: string,
+  setDeclined: (declined: boolean) => void,
+) {
+  return (result: PaymentResult) => {
+    if (result.payment.status === "DECLINED") {
+      setDeclined(true);
+      return;
+    }
+    const ticketIds = result.tickets.map((ticket) => ticket.id).join(",");
+    router.push(`/checkout/${reservationId}/success?tickets=${ticketIds}`);
+  };
+}
+
+function RedeemWithSubscriptionButton({
+  subscription,
+  quantity,
+  disabled,
+  onRedeem,
+}: {
+  subscription: Subscription | null | undefined;
+  quantity: number;
+  disabled: boolean;
+  onRedeem: () => void;
+}) {
+  const canRedeem =
+    subscription?.status === SubscriptionStatus.ACTIVE &&
+    subscription.freeTicketsRemaining >= quantity;
+
+  if (!canRedeem) {
+    return null;
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      disabled={disabled}
+      onClick={onRedeem}
+      className="mt-4 w-full"
+    >
+      Use free ticket from subscription ({subscription.freeTicketsRemaining} left)
+    </Button>
+  );
+}
+
 export default function CheckoutPage() {
   const { reservationId } = useParams<{ reservationId: string }>();
   const router = useRouter();
@@ -38,16 +88,25 @@ export default function CheckoutPage() {
   const msRemaining = useMillisecondsRemaining(reservationQuery.data?.expiresAt);
   const isExpired = reservationQuery.data ? msRemaining <= 0 : false;
 
+  const subscriptionQuery = useQuery({
+    queryKey: ["subscription", "me"],
+    queryFn: getMySubscription,
+  });
+
+  const handlePaymentResult = createPaymentResultHandler(
+    router,
+    reservationId,
+    setDeclined,
+  );
+
   const payMutation = useMutation({
     mutationFn: (outcome: PaymentOutcome) => pay(reservationId, outcome),
-    onSuccess: (result) => {
-      if (result.payment.status === "DECLINED") {
-        setDeclined(true);
-        return;
-      }
-      const ticketIds = result.tickets.map((ticket) => ticket.id).join(",");
-      router.push(`/checkout/${reservationId}/success?tickets=${ticketIds}`);
-    },
+    onSuccess: handlePaymentResult,
+  });
+
+  const redeemMutation = useMutation({
+    mutationFn: () => redeemWithSubscription(reservationId),
+    onSuccess: handlePaymentResult,
   });
 
   if (reservationQuery.isPending) {
@@ -101,6 +160,13 @@ export default function CheckoutPage() {
             )}
           </p>
 
+          <RedeemWithSubscriptionButton
+            subscription={subscriptionQuery.data}
+            quantity={quantity}
+            disabled={isExpired || redeemMutation.isPending}
+            onRedeem={() => redeemMutation.mutate()}
+          />
+
           <div className="ticket-perforation mt-5 flex flex-col gap-3 pt-4 sm:flex-row">
             <Button
               type="button"
@@ -124,6 +190,7 @@ export default function CheckoutPage() {
       )}
 
       <ApiErrorNotice error={payMutation.error} />
+      <ApiErrorNotice error={redeemMutation.error} />
     </div>
   );
 }

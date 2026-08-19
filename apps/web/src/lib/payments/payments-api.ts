@@ -21,3 +21,10 @@ export interface PaymentResult {
 export function pay(reservationId: string, outcome: PaymentOutcome): Promise<PaymentResult> {
   return apiRequest("/payments", { method: "POST", body: { reservationId, outcome } });
 }
+
+export function redeemWithSubscription(reservationId: string): Promise<PaymentResult> {
+  return apiRequest("/payments/redeem-with-subscription", {
+    method: "POST",
+    body: { reservationId },
+  });
+}

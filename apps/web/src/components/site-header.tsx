@@ -20,7 +20,10 @@ const PRIMARY_NAV_LINKS: NavLink[] = [
 ];
 
 const ROLE_NAV_LINKS: Record<UserRole, NavLink[]> = {
-  [UserRole.CUSTOMER]: [{ href: "/tickets", label: "My tickets" }],
+  [UserRole.CUSTOMER]: [
+    { href: "/tickets", label: "My tickets" },
+    { href: "/subscription", label: "Subscription" },
+  ],
   [UserRole.ORGANIZER]: [
     { href: "/organizer/movies", label: "My movies" },
     { href: "/organizer/events", label: "My showtimes" },
